@@ -175,23 +175,20 @@ button[data-testid="baseButton-headerNoPadding"] {{ display:none!important; }}
 footer                                           {{ display:none!important; }}
 [data-testid="stStatusWidget"]                   {{ display:none!important; }}
 
-/* ── ANA İÇERİK YERLEŞİMİ (HİZALAMA DÜZELTMESİ) ── */
-/* Kapsayıcıyı tam ortaya zorlayan flex yapısı */
+/* ── ANA İÇERİK YERLEŞİMİ (KÖKTEN ÇÖZÜM) ── */
 [data-testid="stAppViewContainer"] > section.main {{
     margin-left: {SB}px !important;
     width: calc(100vw - {SB}px) !important;
     padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important; /* Ekranın tam ortasına hizalama garantisi */
 }}
 
-/* İçerik bloğunun kendisi */
-div.block-container {{
-    max-width: 800px !important; 
-    width: 100% !important;
-    margin: 0 auto !important; 
-    padding: 4.5rem 1.5rem 175px 1.5rem !important; /* Yazıların görünmesi için üst boşluk artırıldı */
+/* Tüm içeriğin bulunduğu ana kapsayıcıyı merkeze zorla */
+div[data-testid="stMainBlockContainer"] {{
+    max-width: 900px !important; 
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-top: 4.5rem !important;
+    padding-bottom: 200px !important; /* Alt bar için boşluk */
 }}
 
 /* ── CUSTOM SIDEBAR ── */
@@ -310,10 +307,10 @@ div.block-container {{
 
 /* ── Welcome ekranı ── */
 .wlc-title {{
-    font-size: 2rem; font-weight: 700; color: #18172B;
+    font-size: 2.2rem; font-weight: 700; color: #18172B;
     text-align: center; margin: 0 0 0.25rem; letter-spacing: -0.02em;
 }}
-.wlc-sub {{ text-align: center; color: #6B6890; font-size: 0.86rem; margin-bottom: 2.5rem; }}
+.wlc-sub {{ text-align: center; color: #6B6890; font-size: 0.9rem; margin-bottom: 2.5rem; }}
 
 /* Kart wrapper */
 .card-outer {{
@@ -337,7 +334,7 @@ div.block-container {{
 .sug-title {{ font-size: 0.9rem; font-weight: 600; color: #18172B; line-height: 1.3; margin-bottom: 4px; }}
 .sug-desc  {{ font-size: 0.75rem; color: #7B78A0; margin-top: 2px; line-height: 1.45; }}
 
-/* Görünmez Streamlit butonu — kart üzerine tam bindirme */
+/* Görünmez Streamlit butonu */
 .card-btn {{
     position: absolute !important;
     inset: 0 !important;
@@ -403,7 +400,7 @@ div.block-container {{
 .chat-topbar-dot {{ width: 7px; height: 7px; background: #22D49A; border-radius: 50%; flex-shrink: 0; }}
 .chat-topbar-title {{ font-size: 0.83rem; font-weight: 500; color: #18172B; }}
 
-/* ── Modern Chat input + watermark kurtarma ── */
+/* ── Modern Chat input + Uyarı yazısı alt bar ── */
 [data-testid="stBottom"] {{
     position: fixed !important;
     bottom: 0 !important;
@@ -417,41 +414,45 @@ div.block-container {{
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    padding-bottom: 40px !important; /* Watermark'ın üstünde kalması için gerekli boşluk! */
     box-shadow: 0 -8px 32px rgba(90,75,200,0.08) !important;
 }}
 
-/* Input kutusunun olduğu container'ı block-container ile birebir aynı genişlikte yap */
 [data-testid="stBottomBlockContainer"] {{
     width: 100% !important;
-    padding: 0 !important;
-}}
-[data-testid="stBottomBlockContainer"] .block-container {{
-    max-width: 800px !important; 
+    max-width: 900px !important; 
     margin: 0 auto !important;
-    padding: 10px 1.5rem 0px 1.5rem !important;
+    padding: 12px 1.5rem 0px 1.5rem !important;
 }}
 
-/* Disclaimer satırı */
+/* ESKİ ÜST YAZIYI SİLDİK */
 [data-testid="stBottomBlockContainer"]::before {{
+    display: none !important; 
+}}
+
+/* YENİ UYARI YAZISI KUTUNUN ALTINDA VE DAHA BÜYÜK */
+[data-testid="stBottomBlockContainer"]::after {{
     content: "⚠️ Bu platform hukuki tavsiye niteliği taşımamaktadır. Yalnızca genel rehberlik amaçlıdır. Hukuki süreçler için bir avukana danışmanız önerilir.";
     display: block;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.6rem;
-    color: #B0ADCC;
+    font-size: 0.75rem; /* Font büyütüldü */
+    font-weight: 500;
+    color: #7B78A0;
     text-align: center;
-    padding: 8px 24px 0;
-    line-height: 1.4;
-    letter-spacing: 0.01em;
+    padding-top: 12px; /* Kutu ile arasına boşluk */
+    padding-bottom: 24px; /* Manage App (watermark) butonundan kurtulmak için alt boşluk */
+    line-height: 1.5;
 }}
 
-/* Input kutusu */
+/* Input kutusu - Boyutu Küçültüldü */
 [data-testid="stChatInput"] {{
     background: #fff !important;
     border: 1.5px solid rgba(180,160,255,0.5) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     box-shadow: 0 2px 20px rgba(90,75,200,0.10), inset 0 1px 0 rgba(255,255,255,0.9) !important;
-    padding: 4px 6px 4px 18px !important;
+    padding: 2px 6px 2px 14px !important; /* Dikey padding (iç boşluk) azaltıldı */
+    min-height: 44px !important; /* Minimum yükseklik azaltıldı */
+    display: flex !important;
+    align-items: center !important;
     transition: all .2s ease !important;
 }}
 [data-testid="stChatInput"]:focus-within {{
@@ -463,32 +464,35 @@ div.block-container {{
     outline: none !important; box-shadow: none !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.9rem !important; color: #18172B !important;
-    padding: 12px 0 !important; resize: none !important;
-    line-height: 1.5 !important;
+    padding: 8px 0 !important; /* Text alanı dikey padding azaltıldı */
+    min-height: 24px !important;
+    resize: none !important;
+    line-height: 1.4 !important;
 }}
 [data-testid="stChatInput"] textarea::placeholder {{
     color: #B0ADCC !important;
     font-size: 0.88rem !important;
 }}
-/* Gönder butonu — mor gradient, yuvarlak */
+/* Gönder butonu — boyutu inputa uyarlandı */
 [data-testid="stChatInput"] button {{
     background: linear-gradient(135deg, #8B5CFC 0%, #5B30D0 100%) !important;
     border: none !important;
-    border-radius: 12px !important;
-    width: 42px !important;
-    min-width: 42px !important;
-    height: 42px !important;
+    border-radius: 10px !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important; /* Buton da küçültüldü */
     box-shadow: 0 4px 14px rgba(90,75,200,.45) !important;
     color: #fff !important;
     transition: all .2s ease !important;
-    margin: 2px !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 [data-testid="stChatInput"] button:hover {{
     background: linear-gradient(135deg, #9F70FF 0%, #6B40E8 100%) !important;
     box-shadow: 0 6px 20px rgba(124,92,252,.6) !important;
     transform: translateY(-1px) !important;
 }}
-[data-testid="stChatInput"] button svg {{ fill: #fff !important; stroke: #fff !important; width: 18px; height: 18px; }}
+[data-testid="stChatInput"] button svg {{ fill: #fff !important; stroke: #fff !important; width: 16px; height: 16px; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -565,49 +569,55 @@ if pending:
 in_chat = bool(st.session_state.messages) or bool(pending)
 
 if not in_chat:
-    st.markdown('<h1 class="wlc-title">⚖️ Siber Hukuk Portalı</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="wlc-sub">Hukuki vakayı veya dijital haklarınızı yazın, analiz edelim.</p>', unsafe_allow_html=True)
+    # --- YIK VE YENİDEN YAP KISMI ---
+    # İçeriği css ile değil, doğrudan streamlit kolonlarıyla sağa itip merkeze sabitliyoruz
+    spacer_left, center_content, spacer_right = st.columns([1, 8, 1])
+    
+    with center_content:
+        st.markdown('<h1 class="wlc-title">⚖️ Siber Hukuk Portalı</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="wlc-sub">Hukuki vakayı veya dijital haklarınızı yazın, analiz edelim.</p>', unsafe_allow_html=True)
 
-    CARDS = [
-        ("🔒", "KVKK İhlali",        "Kişisel veri ihlali durumunda ne yapmalıyım?"),
-        ("💻", "Siber Saldırı",       "Sisteme izinsiz erişimde hukuki adımlar nelerdir?"),
-        ("📱", "Sosyal Medya Hukuku", "İnternette hakaret ve iftira davası nasıl açılır?"),
-        ("🏛️", "Şikayet Dilekçesi",  "BTK'ya şikayet dilekçesi nasıl hazırlanır?"),
-    ]
+        CARDS = [
+            ("🔒", "KVKK İhlali",        "Kişisel veri ihlali durumunda ne yapmalıyım?"),
+            ("💻", "Siber Saldırı",       "Sisteme izinsiz erişimde hukuki adımlar nelerdir?"),
+            ("📱", "Sosyal Medya Hukuku", "İnternette hakaret ve iftira davası nasıl açılır?"),
+            ("🏛️", "Şikayet Dilekçesi",  "BTK'ya şikayet dilekçesi nasıl hazırlanır?"),
+        ]
 
-    c1, c2 = st.columns(2, gap="medium")
-    for i, (icon, title, desc) in enumerate(CARDS):
-        col = c1 if i % 2 == 0 else c2
-        with col:
-            st.markdown(f"""
-            <div class="card-outer">
-              <div class="sug-card">
-                <div class="sug-icon">{icon}</div>
-                <div class="sug-title">{title}</div>
-                <div class="sug-desc">{desc}</div>
-              </div>
-              <div class="card-btn">
-            """, unsafe_allow_html=True)
-            if st.button(title, key=f"card_{i}"):
-                st.session_state.queued = desc
-                st.rerun()
-            st.markdown("</div></div>", unsafe_allow_html=True) 
+        c1, c2 = st.columns(2, gap="medium")
+        for i, (icon, title, desc) in enumerate(CARDS):
+            col = c1 if i % 2 == 0 else c2
+            with col:
+                st.markdown(f"""
+                <div class="card-outer">
+                  <div class="sug-card">
+                    <div class="sug-icon">{icon}</div>
+                    <div class="sug-title">{title}</div>
+                    <div class="sug-desc">{desc}</div>
+                  </div>
+                  <div class="card-btn">
+                """, unsafe_allow_html=True)
+                if st.button(title, key=f"card_{i}"):
+                    st.session_state.queued = desc
+                    st.rerun()
+                st.markdown("</div></div>", unsafe_allow_html=True) 
 
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-    CHIPS = [
-        ("📄 Dilekçe", "Siber suç için resmi dilekçe oluşturmama yardım et."),
-        ("⏱ Süre?",   "Siber suçlarda başvuru ve dava açma süreleri nedir?"),
-        ("💰 Ceza?",  "Siber suçlarda öngörülen ceza miktarları nedir?"),
-        ("🔍 Kanun",  "Türkiye'de siber suçlarla ilgili kanun maddeleri nelerdir?"),
-    ]
-    st.markdown("<div class='chip-row'>", unsafe_allow_html=True)
-    for col, (label, question) in zip(st.columns(len(CHIPS), gap="small"), CHIPS):
-        with col:
-            if st.button(label, key=f"chip_{label}"):
-                st.session_state.queued = question
-                st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+        CHIPS = [
+            ("📄 Dilekçe", "Siber suç için resmi dilekçe oluşturmama yardım et."),
+            ("⏱ Süre?",   "Siber suçlarda başvuru ve dava açma süreleri nedir?"),
+            ("💰 Ceza?",  "Siber suçlarda öngörülen ceza miktarları nedir?"),
+            ("🔍 Kanun",  "Türkiye'de siber suçlarla ilgili kanun maddeleri nelerdir?"),
+        ]
+        st.markdown("<div class='chip-row'>", unsafe_allow_html=True)
+        chip_cols = st.columns(len(CHIPS), gap="small")
+        for col_chip, (label, question) in zip(chip_cols, CHIPS):
+            with col_chip:
+                if st.button(label, key=f"chip_{label}"):
+                    st.session_state.queued = question
+                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 else:
     if st.session_state.messages:
