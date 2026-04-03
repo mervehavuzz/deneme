@@ -175,20 +175,20 @@ button[data-testid="baseButton-headerNoPadding"] {{ display:none!important; }}
 footer                                           {{ display:none!important; }}
 [data-testid="stStatusWidget"]                   {{ display:none!important; }}
 
-/* ── ANA İÇERİK YERLEŞİMİ (KÖKTEN ÇÖZÜM) ── */
+/* ── ANA İÇERİK YERLEŞİMİ ── */
 [data-testid="stAppViewContainer"] > section.main {{
     margin-left: {SB}px !important;
     width: calc(100vw - {SB}px) !important;
     padding: 0 !important;
 }}
 
-/* Tüm içeriğin bulunduğu ana kapsayıcıyı merkeze zorla */
+/* İçeriğin üst boşluğu azaltılarak yukarı çekildi */
 div[data-testid="stMainBlockContainer"] {{
-    max-width: 900px !important; 
+    max-width: 1000px !important; 
     margin-left: auto !important;
     margin-right: auto !important;
-    padding-top: 4.5rem !important;
-    padding-bottom: 200px !important; /* Alt bar için boşluk */
+    padding-top: 1rem !important; /* ÖNEMLİ: Yukarı çekildi */
+    padding-bottom: 200px !important; 
 }}
 
 /* ── CUSTOM SIDEBAR ── */
@@ -419,9 +419,9 @@ div[data-testid="stMainBlockContainer"] {{
 
 [data-testid="stBottomBlockContainer"] {{
     width: 100% !important;
-    max-width: 900px !important; 
+    max-width: 760px !important; /* ÖNEMLİ: Genişlik sınırlandırıldı ki sağdaki butona çarpmasın */
     margin: 0 auto !important;
-    padding: 12px 1.5rem 0px 1.5rem !important;
+    padding: 14px 1.5rem 0px 1.5rem !important;
 }}
 
 /* ESKİ ÜST YAZIYI SİLDİK */
@@ -429,30 +429,27 @@ div[data-testid="stMainBlockContainer"] {{
     display: none !important; 
 }}
 
-/* YENİ UYARI YAZISI KUTUNUN ALTINDA VE DAHA BÜYÜK */
+/* UYARI YAZISI KUTUNUN ALTINDA VE DAHA BÜYÜK */
 [data-testid="stBottomBlockContainer"]::after {{
     content: "⚠️ Bu platform hukuki tavsiye niteliği taşımamaktadır. Yalnızca genel rehberlik amaçlıdır. Hukuki süreçler için bir avukana danışmanız önerilir.";
     display: block;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem; /* Font büyütüldü */
+    font-size: 0.72rem;
     font-weight: 500;
     color: #7B78A0;
     text-align: center;
-    padding-top: 12px; /* Kutu ile arasına boşluk */
-    padding-bottom: 24px; /* Manage App (watermark) butonundan kurtulmak için alt boşluk */
+    padding-top: 6px; 
+    padding-bottom: 8px; /* Alt boşluk azaltıldı */
     line-height: 1.5;
 }}
 
-/* Input kutusu - Boyutu Küçültüldü */
+/* Input kutusu - Yapı bozulmadan düzeltildi */
 [data-testid="stChatInput"] {{
     background: #fff !important;
     border: 1.5px solid rgba(180,160,255,0.5) !important;
     border-radius: 12px !important;
     box-shadow: 0 2px 20px rgba(90,75,200,0.10), inset 0 1px 0 rgba(255,255,255,0.9) !important;
-    padding: 2px 6px 2px 14px !important; /* Dikey padding (iç boşluk) azaltıldı */
-    min-height: 44px !important; /* Minimum yükseklik azaltıldı */
-    display: flex !important;
-    align-items: center !important;
+    padding: 6px 12px !important; 
     transition: all .2s ease !important;
 }}
 [data-testid="stChatInput"]:focus-within {{
@@ -463,29 +460,27 @@ div[data-testid="stMainBlockContainer"] {{
     background: transparent !important; border: none !important;
     outline: none !important; box-shadow: none !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.9rem !important; color: #18172B !important;
-    padding: 8px 0 !important; /* Text alanı dikey padding azaltıldı */
-    min-height: 24px !important;
+    font-size: 0.95rem !important; color: #18172B !important;
+    padding: 4px 0 !important; 
     resize: none !important;
     line-height: 1.4 !important;
 }}
 [data-testid="stChatInput"] textarea::placeholder {{
     color: #B0ADCC !important;
-    font-size: 0.88rem !important;
+    font-size: 0.9rem !important;
 }}
 /* Gönder butonu — boyutu inputa uyarlandı */
 [data-testid="stChatInput"] button {{
     background: linear-gradient(135deg, #8B5CFC 0%, #5B30D0 100%) !important;
     border: none !important;
     border-radius: 10px !important;
-    width: 34px !important;
-    min-width: 34px !important;
-    height: 34px !important; /* Buton da küçültüldü */
+    width: 36px !important;
+    height: 36px !important; 
     box-shadow: 0 4px 14px rgba(90,75,200,.45) !important;
     color: #fff !important;
     transition: all .2s ease !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
 }}
 [data-testid="stChatInput"] button:hover {{
     background: linear-gradient(135deg, #9F70FF 0%, #6B40E8 100%) !important;
@@ -569,9 +564,8 @@ if pending:
 in_chat = bool(st.session_state.messages) or bool(pending)
 
 if not in_chat:
-    # --- YIK VE YENİDEN YAP KISMI ---
-    # İçeriği css ile değil, doğrudan streamlit kolonlarıyla sağa itip merkeze sabitliyoruz
-    spacer_left, center_content, spacer_right = st.columns([1, 8, 1])
+    # İçeriği sağa itmek için sol boşluk kolonunu büyüttüm ([1.8, 7, 0.2] oranları)
+    spacer_left, center_content, spacer_right = st.columns([1.8, 7, 0.2])
     
     with center_content:
         st.markdown('<h1 class="wlc-title">⚖️ Siber Hukuk Portalı</h1>', unsafe_allow_html=True)
