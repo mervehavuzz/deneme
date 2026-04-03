@@ -150,7 +150,7 @@ elif sb_action == "load" and sb_cid:
 # ─────────────────────────────────────────
 # GLOBAL CSS
 # ─────────────────────────────────────────
-SB = 260   # sidebar genişliği — tek yerden yönetim
+SB = 260   # sidebar genişliği
 
 st.markdown(f"""
 <style>
@@ -175,20 +175,20 @@ button[data-testid="baseButton-headerNoPadding"] {{ display:none!important; }}
 footer                                           {{ display:none!important; }}
 [data-testid="stStatusWidget"]                   {{ display:none!important; }}
 
-/* Ana içerik alanı — sidebar kadar sola it, kalan alanda ortala */
+/* ── ANA İÇERİK YERLEŞİMİ (HİZALAMA DÜZELTMESİ) ── */
+/* Ana alanı sol menünün bittiği yerden başlat */
 [data-testid="stAppViewContainer"] > section.main {{
     margin-left: {SB}px !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    width: calc(100% - {SB}px) !important;
+    padding: 0 !important;
 }}
 
-/* block-container: sidebar'dan sonraki alanda tam ortalı */
+/* İçerik bloğunu tam ortaya hizala ve sağ/sol boşlukları eşitle */
 .block-container {{
-    max-width: 680px !important;
+    max-width: 800px !important; 
     width: 100% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding: 0.6rem 1.5rem 175px 1.5rem !important;
+    margin: 0 auto !important; /* Mükemmel ortalama sağlayan kısım */
+    padding: 3rem 1.5rem 175px 1.5rem !important;
 }}
 
 /* ── CUSTOM SIDEBAR ── */
@@ -310,27 +310,29 @@ footer                                           {{ display:none!important; }}
     font-size: 2rem; font-weight: 700; color: #18172B;
     text-align: center; margin: 1rem 0 0.25rem; letter-spacing: -0.02em;
 }}
-.wlc-sub {{ text-align: center; color: #6B6890; font-size: 0.86rem; margin-bottom: 1rem; }}
+.wlc-sub {{ text-align: center; color: #6B6890; font-size: 0.86rem; margin-bottom: 2rem; }}
 
 /* Kart wrapper */
 .card-outer {{
     position: relative;
     margin-bottom: 8px;
+    height: 100%;
 }}
 .sug-card {{
     background: #fff;
     border: 1.5px solid #E4E0FF;
     border-radius: 12px;
-    padding: 12px 14px;
+    padding: 16px;
+    height: 100%;
     transition: border-color .15s, box-shadow .15s;
 }}
 .sug-card:hover {{
     border-color: #B8AEFF;
     box-shadow: 0 4px 16px rgba(124,92,252,.12);
 }}
-.sug-icon  {{ font-size: 1.1rem; margin-bottom: 4px; }}
-.sug-title {{ font-size: 0.82rem; font-weight: 600; color: #18172B; line-height: 1.3; }}
-.sug-desc  {{ font-size: 0.69rem; color: #7B78A0; margin-top: 2px; line-height: 1.45; }}
+.sug-icon  {{ font-size: 1.4rem; margin-bottom: 8px; }}
+.sug-title {{ font-size: 0.9rem; font-weight: 600; color: #18172B; line-height: 1.3; margin-bottom: 4px; }}
+.sug-desc  {{ font-size: 0.75rem; color: #7B78A0; margin-top: 2px; line-height: 1.45; }}
 
 /* Görünmez Streamlit butonu — kart üzerine tam bindirme */
 .card-btn {{
@@ -365,12 +367,11 @@ footer                                           {{ display:none!important; }}
     z-index: 10 !important;
 }}
 
-/* Streamlit column gap — kartlar arası boşluğu sıfırla, sadece margin bırak */
+/* Streamlit column gap */
 [data-testid="stHorizontalBlock"] {{
-    gap: 10px !important;
+    gap: 16px !important;
     align-items: stretch !important;
 }}
-/* Sütun içindeki her element arasındaki Streamlit boşluğunu kapat */
 [data-testid="stVerticalBlockBorderWrapper"],
 [data-testid="stVerticalBlock"] > div {{
     margin-bottom: 0 !important;
@@ -379,13 +380,16 @@ footer                                           {{ display:none!important; }}
 
 /* chip butonları */
 .chip-row {{
-    margin-top: 8px !important;
+    margin-top: 15px !important;
+    display: flex;
+    justify-content: center;
 }}
 .chip-row button {{
     background: #fff !important; color: #5B3FD9 !important;
     border: 1.5px solid #D4CFFF !important; border-radius: 100px !important;
-    padding: 5px 14px !important; font-size: 0.75rem !important; font-weight: 500 !important;
+    padding: 6px 16px !important; font-size: 0.78rem !important; font-weight: 600 !important;
     transition: all .15s !important;
+    width: 100% !important;
 }}
 .chip-row button:hover {{ background: #EDE9FF !important; border-color: #7C5CFC !important; }}
 
@@ -397,40 +401,47 @@ footer                                           {{ display:none!important; }}
 .chat-topbar-title {{ font-size: 0.83rem; font-weight: 500; color: #18172B; }}
 
 /* ── Modern Chat input + disclaimer sabit alt bar ── */
-[data-testid="stBottom"],
-[data-testid="stBottomBlockContainer"] {{
+/* Alt barı menüden sonra başlat ve genişliğini ayarla */
+[data-testid="stBottom"] {{
     position: fixed !important;
     bottom: 0 !important;
     left: {SB}px !important;
-    right: 0 !important;
+    width: calc(100% - {SB}px) !important;
     background: rgba(248,247,255,0.92) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
     border-top: 1px solid rgba(180,170,255,0.3) !important;
-    padding: 0 !important;
     z-index: 999 !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: center !important;
     box-shadow: 0 -8px 32px rgba(90,75,200,0.08) !important;
 }}
+
+/* Input kutusunun olduğu container'ı block-container ile birebir aynı genişlikte yap */
+[data-testid="stBottomBlockContainer"] {{
+    width: 100% !important;
+    padding: 0 !important;
+}}
+[data-testid="stBottomBlockContainer"] .block-container {{
+    max-width: 800px !important; /* Üstteki alanla aynı olmalı ki tam hizalansın */
+    margin: 0 auto !important;
+    padding: 10px 1.5rem 20px 1.5rem !important;
+}}
+
 /* Disclaimer satırı */
 [data-testid="stBottomBlockContainer"]::before {{
     content: "⚠️ Bu platform hukuki tavsiye niteliği taşımamaktadır. Yalnızca genel rehberlik amaçlıdır. Hukuki süreçler için bir avukana danışmanız önerilir.";
     display: block;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.57rem;
+    font-size: 0.6rem;
     color: #B0ADCC;
     text-align: center;
-    padding: 6px 24px 0;
+    padding: 8px 24px 0;
     line-height: 1.4;
     letter-spacing: 0.01em;
 }}
-[data-testid="stBottomBlockContainer"] .block-container {{
-    max-width: 680px !important;
-    padding: 6px 20px 12px !important;
-    margin: 0 auto !important;
-    width: 100% !important;
-}}
+
 /* Input kutusu */
 [data-testid="stChatInput"] {{
     background: #fff !important;
@@ -448,22 +459,22 @@ footer                                           {{ display:none!important; }}
     background: transparent !important; border: none !important;
     outline: none !important; box-shadow: none !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.88rem !important; color: #18172B !important;
-    padding: 10px 0 !important; resize: none !important;
+    font-size: 0.9rem !important; color: #18172B !important;
+    padding: 12px 0 !important; resize: none !important;
     line-height: 1.5 !important;
 }}
 [data-testid="stChatInput"] textarea::placeholder {{
     color: #B0ADCC !important;
-    font-size: 0.85rem !important;
+    font-size: 0.88rem !important;
 }}
 /* Gönder butonu — mor gradient, yuvarlak */
 [data-testid="stChatInput"] button {{
     background: linear-gradient(135deg, #8B5CFC 0%, #5B30D0 100%) !important;
     border: none !important;
     border-radius: 12px !important;
-    width: 38px !important;
-    min-width: 38px !important;
-    height: 38px !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
     box-shadow: 0 4px 14px rgba(90,75,200,.45) !important;
     color: #fff !important;
     transition: all .2s ease !important;
@@ -474,7 +485,7 @@ footer                                           {{ display:none!important; }}
     box-shadow: 0 6px 20px rgba(124,92,252,.6) !important;
     transform: translateY(-1px) !important;
 }}
-[data-testid="stChatInput"] button svg {{ fill: #fff !important; stroke: #fff !important; }}
+[data-testid="stChatInput"] button svg {{ fill: #fff !important; stroke: #fff !important; width: 18px; height: 18px; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -561,11 +572,10 @@ if not in_chat:
         ("🏛️", "Şikayet Dilekçesi",  "BTK'ya şikayet dilekçesi nasıl hazırlanır?"),
     ]
 
-    c1, c2 = st.columns(2, gap="small")
+    c1, c2 = st.columns(2, gap="medium")
     for i, (icon, title, desc) in enumerate(CARDS):
         col = c1 if i % 2 == 0 else c2
         with col:
-            # card-outer açılıyor — position:relative kapsayıcı
             st.markdown(f"""
             <div class="card-outer">
               <div class="sug-card">
@@ -575,13 +585,12 @@ if not in_chat:
               </div>
               <div class="card-btn">
             """, unsafe_allow_html=True)
-            # Streamlit butonu — CSS ile card-outer'a absolute olarak yapışır
             if st.button(title, key=f"card_{i}"):
                 st.session_state.queued = desc
                 st.rerun()
-            st.markdown("</div></div>", unsafe_allow_html=True)  # card-btn + card-outer kapat
+            st.markdown("</div></div>", unsafe_allow_html=True) 
 
-    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     CHIPS = [
         ("📄 Dilekçe", "Siber suç için resmi dilekçe oluşturmama yardım et."),
