@@ -176,19 +176,22 @@ footer                                           {{ display:none!important; }}
 [data-testid="stStatusWidget"]                   {{ display:none!important; }}
 
 /* ── ANA İÇERİK YERLEŞİMİ (HİZALAMA DÜZELTMESİ) ── */
-/* Ana alanı sol menünün bittiği yerden başlat */
+/* Kapsayıcıyı tam ortaya zorlayan flex yapısı */
 [data-testid="stAppViewContainer"] > section.main {{
     margin-left: {SB}px !important;
-    width: calc(100% - {SB}px) !important;
+    width: calc(100vw - {SB}px) !important;
     padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important; /* Ekranın tam ortasına hizalama garantisi */
 }}
 
-/* İçerik bloğunu tam ortaya hizala ve sağ/sol boşlukları eşitle */
-.block-container {{
+/* İçerik bloğunun kendisi */
+div.block-container {{
     max-width: 800px !important; 
     width: 100% !important;
-    margin: 0 auto !important; /* Mükemmel ortalama sağlayan kısım */
-    padding: 3rem 1.5rem 175px 1.5rem !important;
+    margin: 0 auto !important; 
+    padding: 4.5rem 1.5rem 175px 1.5rem !important; /* Yazıların görünmesi için üst boşluk artırıldı */
 }}
 
 /* ── CUSTOM SIDEBAR ── */
@@ -308,9 +311,9 @@ footer                                           {{ display:none!important; }}
 /* ── Welcome ekranı ── */
 .wlc-title {{
     font-size: 2rem; font-weight: 700; color: #18172B;
-    text-align: center; margin: 1rem 0 0.25rem; letter-spacing: -0.02em;
+    text-align: center; margin: 0 0 0.25rem; letter-spacing: -0.02em;
 }}
-.wlc-sub {{ text-align: center; color: #6B6890; font-size: 0.86rem; margin-bottom: 2rem; }}
+.wlc-sub {{ text-align: center; color: #6B6890; font-size: 0.86rem; margin-bottom: 2.5rem; }}
 
 /* Kart wrapper */
 .card-outer {{
@@ -380,7 +383,7 @@ footer                                           {{ display:none!important; }}
 
 /* chip butonları */
 .chip-row {{
-    margin-top: 15px !important;
+    margin-top: 20px !important;
     display: flex;
     justify-content: center;
 }}
@@ -400,13 +403,12 @@ footer                                           {{ display:none!important; }}
 .chat-topbar-dot {{ width: 7px; height: 7px; background: #22D49A; border-radius: 50%; flex-shrink: 0; }}
 .chat-topbar-title {{ font-size: 0.83rem; font-weight: 500; color: #18172B; }}
 
-/* ── Modern Chat input + disclaimer sabit alt bar ── */
-/* Alt barı menüden sonra başlat ve genişliğini ayarla */
+/* ── Modern Chat input + watermark kurtarma ── */
 [data-testid="stBottom"] {{
     position: fixed !important;
     bottom: 0 !important;
     left: {SB}px !important;
-    width: calc(100% - {SB}px) !important;
+    width: calc(100vw - {SB}px) !important;
     background: rgba(248,247,255,0.92) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
@@ -415,6 +417,7 @@ footer                                           {{ display:none!important; }}
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+    padding-bottom: 40px !important; /* Watermark'ın üstünde kalması için gerekli boşluk! */
     box-shadow: 0 -8px 32px rgba(90,75,200,0.08) !important;
 }}
 
@@ -424,9 +427,9 @@ footer                                           {{ display:none!important; }}
     padding: 0 !important;
 }}
 [data-testid="stBottomBlockContainer"] .block-container {{
-    max-width: 800px !important; /* Üstteki alanla aynı olmalı ki tam hizalansın */
+    max-width: 800px !important; 
     margin: 0 auto !important;
-    padding: 10px 1.5rem 20px 1.5rem !important;
+    padding: 10px 1.5rem 0px 1.5rem !important;
 }}
 
 /* Disclaimer satırı */
