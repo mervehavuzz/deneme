@@ -55,7 +55,7 @@ try:
     # Streamlit Cloud'da "HF_TOKEN" isminde kayıtlı olduğu varsayıldı
     hf_token = st.secrets["HF_TOKEN"]
     # Model: Mistral-7B-Instruct (Türkçe ve İngilizce performansı dengelidir)
-    _model_id = "mistralai/Mistral-7B-Instruct-v0.3" 
+    _model_id = "HuggingFaceH4/zephyr-7b-beta" 
     client = InferenceClient(model=_model_id, token=hf_token)
 except Exception as e:
     st.error(f"API/Hugging Face Bağlantı Hatası: {e}")
