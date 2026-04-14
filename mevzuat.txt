@@ -1,0 +1,56 @@
+TCK (Türk Ceza Kanunu)
+TCK 106 – Tehdit
+
+Bir kişiyi, kendisine veya yakınına zarar verileceği yönünde korkutma veya tehdit etme.
+
+TCK 125 – Hakaret
+
+Bir kişiye onur, şeref ve saygınlığını zedeleyecek şekilde somut bir fiil veya olgu isnat etme.
+
+TCK 132 – Haberleşmenin gizliliğini ihlal
+
+Kişiler arasındaki haberleşmenin içeriğini hukuka aykırı şekilde öğrenme veya ifşa etme.
+
+TCK 136 – Kişisel verileri hukuka aykırı ele geçirme / yayma
+
+Kişisel verilerin izinsiz şekilde elde edilmesi, paylaşılması veya yayılması.
+
+TCK 243 – Bilişim sistemine girme
+
+Bir bilişim sistemine hukuka aykırı şekilde giriş yapma veya içeride kalma.
+
+TCK 244 – Sistemi engelleme, bozma, verileri yok etme veya değiştirme
+
+Bilişim sisteminin işleyişini bozma, verileri silme, değiştirme veya sisteme müdahale etme.
+
+TCK 158 – Nitelikli dolandırıcılık
+
+Kamu kurumu, banka, bilişim sistemleri veya dini/sosyal güven kullanılarak hile ile menfaat sağlama.
+
+TCK 245 – Banka veya kredi kartlarının kötüye kullanılması
+
+Banka/kredi kartı bilgilerini izinsiz kullanarak yarar sağlama.
+
+KVKK (Kişisel Verilerin Korunması Kanunu)
+KVKK Madde 5 – Kişisel verilerin işlenme şartları
+
+Kişisel veriler ancak şu şartlarla işlenebilir:
+
+Açık rıza
+Kanunlarda açıkça öngörülme
+Sözleşmenin kurulması veya ifası
+Hukuki yükümlülük
+Bir hakkın tesisi/kullanılması
+Meşru menfaat (temel haklara zarar vermemek şartıyla)
+KVKK Madde 6 – Özel nitelikli kişisel veriler
+
+Sağlık, ceza mahkûmiyeti, biyometrik ve genetik veriler gibi özel nitelikli verilerin daha sıkı şartlarla işlenmesini düzenler.
+
+KVKK Madde 12 – Veri güvenliği yükümlülüğü
+
+Veri sorumlusu:
+
+Verilerin hukuka aykırı işlenmesini önlemek
+Verilere yetkisiz erişimi engellemek
+Veri güvenliğini sağlamak
+İhlal durumunda Kurul’a bildirim yapmak (72 saat)
