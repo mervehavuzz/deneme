@@ -8,243 +8,240 @@ from datetime import datetime
 # 1. SAYFA AYARI VE GÖRSEL TASARIM (UI)
 # ─────────────────────────────────────────
 st.set_page_config(
-    page_title="Siber Hukuk Asistanı",
+    page_title="Siber Hukuk Analiz Sistemi",
     page_icon="⚖️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded"
 )
 
 # ─────────────────────────────────────────
-# 2. VERİTABANI İŞLEMLERİ
+# 2. VERİTABANI İŞLEMLERİ (JSON)
 # ─────────────────────────────────────────
 DB_FILE = "chat_history.json"
 
 def load_db() -> dict:
     if os.path.exists(DB_FILE):
         try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception: pass
+            with open(DB_FILE, "r", encoding="utf-8") as f: return json.load(f)
+        except: pass
     return {}
 
 def save_db(data: dict) -> None:
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-def save_current() -> None:
-    db = load_db()
-    db[st.session_state.chat_id] = st.session_state.messages
-    save_db(db)
+    with open(DB_FILE, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=2)
 
 # ─────────────────────────────────────────
-# 3. AKILLI PIPELINE AYARLARI (LOGIC)
+# 3. KURAL MOTORU VE MANTIKSAL ÇERÇEVE (RULE ENGINE)
 # ─────────────────────────────────────────
-KVKK_CONTEXT = """
-HUKUKİ TASNİF VE KARAR AĞACI:
-1. İdari İhlal: Veri güvenliği eksikliği, aydınlatma yükümlülüğü ihlali (KVKK Md. 12).
-2. Veri İhlali: Verilerin yetkisiz sızması (KVKK Md. 12/5 - 72 Saat Bildirim Şartı).
-3. Siber Suçlar (TCK): Sisteme engelleme/bozma (TCK 244), Verileri yok etme/değiştirme (TCK 244/2), Verileri hukuka aykırı ele geçirme (TCK 136).
+# Modelin uydurmasını engellemek için kuralları çok net ve kısa tutuyoruz.
+BASE_RULES = """Sen bir Siber Hukuk Sınıflandırma ve Karar Motorusun. 'Yorum yapan avukat' gibi değil, 'net karar veren bir hakim' gibi davran.
+Asla bu formatın dışına çıkma:
+**OLAY:** (1 Cümle)
+**SINIFLANDIRMA:** (Sadece Biri: TCK SUÇU / KVKK İDARİ İHLAL / HUKUKA UYGUN)
+**İLGİLİ MADDELER:** (Sadece Kanun/Madde Numaraları)
+**HUKUKİ GEREKÇE:** (Kısa analiz)
+**SONUÇ VE AKSİYON:** (Net tavsiye)"""
 
-İŞLEME ŞARTLARI (Md. 5/2): 
-a) Kanun, c) Sözleşme, ç) Hukuki Yükümlülük, e) Hakkın Tesisi, f) Meşru Menfaat (Denge testi zorunlu).
-ÖNEMLİ: Suç teşkil eden eylemlerde (hack, hırsızlık, izinsiz giriş) 5/2 maddeleri (meşru menfaat vb.) tartışılamaz; doğrudan İHLAL ve SUÇ denmelidir.
-"""
+def pre_process_query(text: str) -> dict:
+    """Kullanıcı metnini Python'da tarayıp LLM'e gidecek gizli direktifi belirler."""
+    text_lower = text.lower()
+    crime_keywords = ["hack", "izinsiz", "çal", "ele geçir", "sızdır", "şifre", "kopyala", "gizlice"]
+    
+    is_crime = any(kw in text_lower for kw in crime_keywords)
+    
+    if is_crime:
+        directive = "DİKKAT: Bu olayda 'Yetkisiz Erişim / Veri Çalma' tespiti yapıldı. KVKK 5/2 (Meşru Menfaat vb.) ŞARTLARINI ASLA TARTIŞMA. Doğrudan TCK 136, 132 veya 244 kapsamında SUÇ olarak sınıflandır."
+    else:
+        directive = "DİKKAT: Bu bir kurumsal veri işleme/profilleme vakasıdır. KVKK Madde 5/2 kapsamında 'Ölçülülük' ve 'Denge Testi' (Kullanıcı mahremiyeti vs. Şirket Karı) analizi yap. Otomatik karar verme (Madde 11) boyutunu atlama."
+        
+    return {"is_crime": is_crime, "directive": directive}
 
-SYSTEM_PROMPT = """Sen uzman bir Siber Hukuk Analiz Motorusun. 
-Görevin: Vakaları KVKK ve Türk Ceza Kanunu çerçevesinde analiz etmek.
+def post_process_validator(llm_output: str, is_crime: bool) -> str:
+    """LLM'in çıktısını ekrana basmadan önce son kez denetler (Hard Validator)"""
+    output_lower = llm_output.lower()
+    
+    # Kural 1: Suç olan yerde meşru menfaat geçiyorsa sansürle/düzelt
+    if is_crime and "meşru menfaat" in output_lower:
+        return llm_output + "\n\n> ⚠️ **Sistem Uyarısı:** Model analizinde 'meşru menfaat' kavramı geçmiş olsa da, Kural Motoru bu eylemin TCK kapsamında **suç** olduğunu tespit etmiştir. Hukuka aykırı eylemlerde meşru menfaat geçerli bir hukuki dayanak olamaz."
+    
+    # Kural 2: Sınıflandırma başlığı yoksa uyar
+    if "**SINIFLANDIRMA:**" not in llm_output:
+        return "**SINIFLANDIRMA:** Tespit Edilemedi (Lütfen Formatı Zorlayınız)\n" + llm_output
+        
+    return llm_output
 
-FORMAT ZORUNLULUĞU:
-- **OLAY:** (Kısa teknik özet)
-- **HUKUKİ NİTELİK:** (Suç mu, idari ihlal mi, veri işleme mi?)
-- **KVKK ANALİZİ:** (Madde 5/2 ve Madde 12 eşleşmesi. Varsa TCK maddesi.)
-- **SONUÇ VE ÖNERİ:** (Kısa, net ve uygulanabilir aksiyonlar.)
-
-DİL: Akademik, ciddi ve hukukçu terminolojisine uygun."""
-
+# ─────────────────────────────────────────
+# 4. API BAĞLANTISI (HUGGING FACE)
+# ─────────────────────────────────────────
 try:
     hf_token = st.secrets["HF_TOKEN"]
-    # Muhakeme yeteneği yüksek olan model
     _model_id = "Qwen/Qwen2.5-7B-Instruct" 
     client = InferenceClient(model=_model_id, token=hf_token)
 except Exception as e:
-    st.error(f"API Bağlantı Hatası: {e}")
+    st.error(f"API Bağlantı Hatası: Lütfen Secrets ayarlarınızı kontrol edin. Detay: {e}")
     st.stop()
 
-# ─────────────────────────────────────────
-# 4. YARDIMCI FONKSİYONLAR (PIPELINE)
-# ─────────────────────────────────────────
-def internal_validator(text):
-    text_lower = text.lower()
-    risk_keywords = ["tck", "suç", "hacker", "izinsiz", "ele geçirme"]
-    has_risk = any(k in text_lower for k in risk_keywords)
-    is_marked_proper = any(k in text_lower for k in ["hukuka uygun", "meşru menfaat"])
-    if has_risk and is_marked_proper: return False
-    return True
+def call_llm(messages, temp=0.1):
+    # Deterministik (kesin) sonuçlar için temperature çok düşük tutuldu
+    res = client.chat_completion(messages=messages, max_tokens=800, temperature=temp, top_p=0.8)
+    return res.choices[0].message.content
 
-def call_engine(messages, temp=0.2, tokens=1200):
-    output = client.chat_completion(
-        messages=messages,
-        max_tokens=tokens,
-        temperature=temp,
-        top_p=0.8
-    )
-    return output.choices[0].message.content
-
-def run_analysis_pipeline(user_query):
-    # Son 6 mesajı gönder (Context Window Control)
-    history = st.session_state.messages[-6:]
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "system", "content": KVKK_CONTEXT}]
+def run_legal_pipeline(user_query: str):
+    # 1. Adım: Rule Engine Sınıflandırması
+    pre_check = pre_process_query(user_query)
+    
+    # 2. Adım: Prompt Hazırlığı (Dinamik ve Kilitli)
+    sys_prompt = f"{BASE_RULES}\n\n{pre_check['directive']}"
+    
+    history = st.session_state.messages[-4:] # Sadece son 4 mesaj (Context şişmesini önler)
+    messages = [{"role": "system", "content": sys_prompt}]
     for m in history: messages.append({"role": m["role"], "content": m["content"]})
     messages.append({"role": "user", "content": user_query})
 
-    with st.status("⚖️ Hukuki Analiz Yapılıyor...", expanded=True) as status:
-        st.write("🔍 Vaka verileri işleniyor...")
-        draft = call_engine(messages, temp=0.3)
+    with st.status("⚖️ Hukuk Motoru Çalışıyor...", expanded=True) as status:
+        st.write("🔍 Python Kural Motoru: Vaka taranıyor...")
+        if pre_check['is_crime']: st.error("🚨 Kritik İhlal / TCK Suç şüphesi saptandı.")
+        else: st.info("📊 Kurumsal Veri İşleme / KVKK Vakası saptandı.")
         
-        st.write("⚖️ Mevzuat uyumluluğu denetleniyor...")
-        check_prompt = f"Şu analizi denetle ve hataları düzelt, formatı koru:\n{draft}"
-        final = call_engine([{"role": "user", "content": check_prompt}], temp=0.1)
+        st.write("⚙️ LLM Hukuki Metni Üretiyor...")
+        raw_output = call_llm(messages)
         
-        if not internal_validator(final):
-            final = call_engine([{"role": "user", "content": f"Şu analizi daha tutarlı yaz: {final}"}], temp=0.05)
-            
+        st.write("🛡️ Çıktı Validator'dan Geçiriliyor...")
+        final_output = post_process_validator(raw_output, pre_check['is_crime'])
+        
         status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
-    return final
+        
+    return final_output
 
 # ─────────────────────────────────────────
-# 5. GLOBAL CSS (MOR TEMA VE UI ÖZELLİKLERİ)
+# 5. GLOBAL CSS (KUSURSUZ MOR TEMA)
 # ─────────────────────────────────────────
-SB = 260
-st.markdown(f"""
+st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
-*, *::before, *::after {{ box-sizing: border-box; }}
-html, body, .stApp {{
-    font-family: 'DM Sans', sans-serif !important;
-    background: #F8F7FF !important;
-    color: #18172B !important;
-}}
-section[data-testid="stSidebar"], header[data-testid="stHeader"], 
-[data-testid="stToolbar"], [data-testid="stDeployButton"], 
-[data-testid="collapsedControl"], footer {{ display:none!important; }}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
+.stApp { background: #F8F7FF !important; color: #18172B !important; }
 
-[data-testid="stAppViewContainer"] > section.main {{
-    margin-left: {SB}px !important;
-    width: calc(100vw - {SB}px) !important;
-    padding: 0 !important;
-}}
-div[data-testid="stMainBlockContainer"] {{
-    max-width: 1000px !important; margin-left: auto !important; margin-right: auto !important;
-    padding-top: 1rem !important; padding-bottom: 200px !important; 
-}}
-
-#custom-sidebar {{
-    position: fixed; top: 0; left: 0; width: {SB}px; height: 100vh;
-    background: linear-gradient(160deg, #5B2FD9 0%, #7C3FFC 40%, #6A2EE8 100%);
+/* Sidebar Native Styling */
+[data-testid="stSidebar"] {
+    background: linear-gradient(160deg, #5B2FD9 0%, #7C3FFC 40%, #6A2EE8 100%) !important;
+    border-right: none !important;
     box-shadow: 4px 0 32px rgba(124,63,252,0.35);
-    display: flex; flex-direction: column; z-index: 9999; overflow: hidden;
-}}
-.sb-header {{ padding: 22px 16px 18px; border-bottom: 1px solid rgba(255,255,255,0.15); }}
-.sb-badge {{ font-size: 0.58rem; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; margin-bottom: 10px; }}
-.sb-botname {{ font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 14px; }}
-.sb-profile {{ display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.12); border-radius: 10px; }}
-.sb-avatar {{ width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; color: #fff; }}
-.sb-name {{ font-size: 0.88rem; font-weight: 700; color: #fff; }}
-.sb-role {{ font-size: 0.65rem; color: rgba(255,255,255,0.65); }}
-.sb-new-btn {{ width: 90%; margin: 14px auto; padding: 10px; background: linear-gradient(135deg, #C47FFF 0%, #A040FF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; }}
-.sb-history {{ flex: 1; overflow-y: auto; padding: 10px; }}
-.sb-chat-btn {{ width: 100%; text-align: left; background: transparent; border: none; color: rgba(237,233,255,0.75); padding: 8px; cursor: pointer; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
-.sb-active {{ background: rgba(255,255,255,0.18); color: #fff; border-left: 2px solid #fff; }}
+}
+[data-testid="stSidebar"] * { color: white !important; border-color: rgba(255,255,255,0.1) !important; }
 
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stMarkdownContainer"] {{
-    background: #7C5CFC !important; color: #fff !important; border-radius: 16px 16px 4px 16px !important; padding: 11px 16px !important;
-}}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stMarkdownContainer"] {{
-    background: #fff !important; color: #18172B !important; border: 1px solid #E4E0FF !important; border-radius: 4px 16px 16px 16px !important; padding: 13px 18px !important;
-}}
+/* Profile Box in Sidebar */
+.sb-profile-box {
+    background: rgba(255,255,255,0.12); border-radius: 10px; padding: 15px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+}
+.sb-avatar-circle {
+    width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;
+}
 
-[data-testid="stBottom"] {{
-    position: fixed !important; bottom: 0 !important; left: {SB}px !important; width: calc(100vw - {SB}px) !important;
-    background: rgba(248,247,255,0.92) !important; backdrop-filter: blur(16px) !important; padding: 10px 0 !important;
-}}
-[data-testid="stBottomBlockContainer"]::after {{
-    content: "⚠️ Bu platform hukuki tavsiye niteliği taşımamaktadır. Yalnızca genel rehberlik amaçlıdır.";
-    display: block; font-size: 0.72rem; color: #7B78A0; text-align: center; margin-top: 8px;
-}}
+/* Chat Messages */
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+    background: #7C5CFC !important; border-radius: 16px 16px 4px 16px !important; margin-bottom: 15px;
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) * { color: white !important; }
+
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
+    background: white !important; border: 1px solid #E4E0FF !important; border-radius: 4px 16px 16px 16px !important; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+/* Input Area Fix */
+[data-testid="stBottom"] { background: transparent !important; }
+[data-testid="stChatInput"] { background: white !important; border: 1px solid #E4E0FF !important; border-radius: 12px !important; box-shadow: 0 4px 20px rgba(124,63,252,0.1) !important;}
 </style>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
-# 6. SIDEBAR İÇERİĞİ
-# ─────────────────────────────────────────
-db_sb = load_db()
-grouped = sorted(db_sb.keys(), reverse=True)
-history_html = ""
-for cid in grouped:
-    msgs_s = db_sb.get(cid, [])
-    lbl = (msgs_s[0].get("title") or msgs_s[0]["content"][:22] + "…") if msgs_s else "Analiz"
-    active = "sb-active" if cid == st.session_state.get("chat_id") else ""
-    history_html += f"<button class='sb-chat-btn {active}' onclick=\"goLoad('{cid}')\">💬 {lbl}</button>"
-
-st.markdown(f"""
-<div id="custom-sidebar">
-  <div class="sb-header">
-    <div class="sb-badge">Bilişim Güvenliği Teknolojisi<br>Bitirme Projesi</div>
-    <div class="sb-botname">⚖️ Siber Hukuk Botu</div>
-    <div class="sb-profile"><div class="sb-avatar">MH</div><div><div class="sb-name">Merve Havuz</div><div class="sb-role">Proje Sahibi</div></div></div>
-  </div>
-  <div class="sb-new-wrap"><button class="sb-new-btn" onclick="goNew()">＋&nbsp;&nbsp;Yeni Analiz</button></div>
-  <div class="sb-history">{history_html}</div>
-</div>
-<script>
-function goNew() {{ window.location.href = window.location.pathname + '?sb_action=new'; }}
-function goLoad(cid) {{ window.location.href = window.location.pathname + '?sb_action=load&sb_cid=' + cid; }}
-</script>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────
-# 7. ANA İÇERİK VE ANALİZ
+# 6. SESSION & STATE YÖNETİMİ
 # ─────────────────────────────────────────
 if "chat_id" not in st.session_state: st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 if "messages" not in st.session_state: st.session_state.messages = []
 if "queued" not in st.session_state: st.session_state.queued = ""
 
-params = st.query_params
-if params.get("sb_action") == "new":
-    st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-    st.session_state.messages = []
-    st.query_params.clear()
-    st.rerun()
+db = load_db()
 
-pending = st.session_state.queued
-if pending:
-    st.session_state.queued = ""
-    st.session_state.messages.append({"role": "user", "content": pending})
-    with st.chat_message("user", avatar="👤"): st.markdown(pending)
-    with st.chat_message("assistant", avatar="⚖️"):
-        ans = run_analysis_pipeline(pending)
-        st.markdown(ans)
-        st.session_state.messages.append({"role": "assistant", "content": ans})
-        save_current()
-
-if not st.session_state.messages:
-    spacer_left, center_content, spacer_right = st.columns([1.8, 7, 0.2])
-    with center_content:
-        st.markdown('<h1 style="text-align:center;">⚖️ Siber Hukuk Portalı</h1>', unsafe_allow_html=True)
-        st.markdown('<p style="text-align:center; color:#6B6890;">Hukuki vakayı veya dijital haklarınızı yazın, analiz edelim.</p>', unsafe_allow_html=True)
-        if st.button("Örnek Senaryo: Veri İhlali Bildirimi"):
-            st.session_state.queued = "Bir şirket çalışanı müşteri listesini çalarsa ne olur?"
+# ─────────────────────────────────────────
+# 7. SİDEBAR (NATIVE & STABİL)
+# ─────────────────────────────────────────
+with st.sidebar:
+    st.markdown("""
+        <div style='font-size: 0.65rem; font-weight: bold; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 5px;'>Bitirme Projesi</div>
+        <div style='font-size: 1.5rem; font-weight: 800; margin-bottom: 20px;'>⚖️ Siber Hukuk</div>
+        <div class='sb-profile-box'>
+            <div class='sb-avatar-circle'>MH</div>
+            <div>
+                <div style='font-weight: 700; font-size: 1rem;'>Merve Havuz</div>
+                <div style='font-size: 0.75rem; color: rgba(255,255,255,0.7);'>Proje Sahibi</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("➕ Yeni Analiz Başlat", use_container_width=True):
+        st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        st.session_state.messages = []
+        st.rerun()
+        
+    st.markdown("<hr style='opacity: 0.2; margin: 15px 0;'>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 0.8rem; opacity: 0.7; margin-bottom: 10px;'>GEÇMİŞ ANALİZLER</div>", unsafe_allow_html=True)
+    
+    for cid in sorted(db.keys(), reverse=True):
+        msgs = db[cid]
+        if not msgs: continue
+        title = msgs[0]["content"][:25] + "..."
+        if st.button(f"💬 {title}", key=cid, use_container_width=True):
+            st.session_state.chat_id = cid
+            st.session_state.messages = msgs
             st.rerun()
-else:
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"], avatar="👤" if msg["role"]=="user" else "⚖️"):
-            st.markdown(msg["content"])
 
-if user_input := st.chat_input("Hukuki vakayı buraya yazın..."):
-    with st.chat_message("user", avatar="👤"): st.markdown(user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input})
+# ─────────────────────────────────────────
+# 8. ANA İÇERİK VE İŞLEYİŞ
+# ─────────────────────────────────────────
+# Eğer queued'da işlem varsa hemen başlat
+if st.session_state.queued:
+    user_query = st.session_state.queued
+    st.session_state.queued = ""
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    with st.chat_message("user", avatar="👤"): st.markdown(user_query)
     with st.chat_message("assistant", avatar="⚖️"):
-        ans = run_analysis_pipeline(user_input)
+        ans = run_legal_pipeline(user_query)
         st.markdown(ans)
         st.session_state.messages.append({"role": "assistant", "content": ans})
-        save_current()
+        db[st.session_state.chat_id] = st.session_state.messages
+        save_db(db)
+
+# Boş ekran (İlk açılış)
+if not st.session_state.messages:
+    col1, col2, col3 = st.columns([1, 6, 1])
+    with col2:
+        st.markdown("<br><br><h1 style='text-align:center;'>🛡️ Siber Hukuk Analiz Portalı</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#7B78A0; font-size:1.1rem; margin-bottom:40px;'>Kural Tabanlı Hukuk Motoru (Rule Engine) & Yapay Zeka (LLM) Entegrasyonu.</p>", unsafe_allow_html=True)
+        
+        st.markdown("**🧪 Örnek Senaryolarla Test Edin:**")
+        c1, c2 = st.columns(2)
+        if c1.button("🔒 Senaryo 1: Çalışanın mailleri gizlice okuması (TCK Testi)", use_container_width=True):
+            st.session_state.queued = "Bir çalışan arkadaşının bilgisayarını açık bulup e-postalarını gizlice kopyalıyor ve şirkete şikayet ediyor."
+            st.rerun()
+        if c2.button("📱 Senaryo 2: E-ticaret Dinamik Fiyatlandırma (KVKK Testi)", use_container_width=True):
+            st.session_state.queued = "E-ticaret sitemizde kullanıcıların tıklama verilerini analiz edip (profilleme) onlara özel farklı fiyatlar gösteriyoruz."
+            st.rerun()
+
+# Mesaj geçmişini renderla
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "⚖️"):
+        st.markdown(msg["content"])
+
+# Kullanıcı Girişi
+if user_input := st.chat_input("Hukuki senaryoyu detaylıca buraya yazın..."):
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user", avatar="👤"): st.markdown(user_input)
+    
+    with st.chat_message("assistant", avatar="⚖️"):
+        answer = run_legal_pipeline(user_input)
+        st.markdown(answer)
+        st.session_state.messages.append({"role": "assistant", "content": answer})
+        db[st.session_state.chat_id] = st.session_state.messages
+        save_db(db)
