@@ -147,8 +147,10 @@ def stream_response(prompt: str, placeholder) -> str:
     try:
         for message in client.chat_completion(
             messages=messages,
-            max_tokens=1500,
+            max_tokens=2000,
             stream=True,
+            temperature=0.3,
+            top_p=0.9
         ):
             token = message.choices[0].delta.content
             if token:
