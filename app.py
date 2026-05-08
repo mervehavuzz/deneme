@@ -34,6 +34,9 @@ HUKUK_DB = {
     "veri_guvenligi": {"madde": "KVKK Madde 12", "aciklama": "Veri güvenliği yükümlülükleri."},
     "mesru_menfaat": {"madde": "KVKK Madde 5/2-f", "aciklama": "Meşru menfaat işleme şartı."},
     "acik_riza": {"madde": "KVKK Madde 5/1", "aciklama": "Açık rıza ile veri işleme."}
+    "santaj": {"madde": "TCK 107", "aciklama": "Şantaj suçu."},
+"tehdit": {"madde": "TCK 106", "aciklama": "Tehdit suçu."},
+"ifsa": {"madde": "TCK 134", "aciklama": "Özel hayatın gizliliğini ihlal."}
 }
 
 def retrieve_mevzuat(ilgili_maddeler):
@@ -141,7 +144,14 @@ def run_pipeline(user_query):
     with st.status("⚖️ Hukuk Motoru Analiz Yapıyor...", expanded=True) as status:
         # Sınıflandırma
         st.write("🔍 Aşama 1: Vaka Sınıflandırılıyor...")
-        class_prompt = f"Olayı analiz et ve uyan etiketleri JSON olarak ver: [yetkisiz_erisim, veri_calma, mail_okuma, veri_guvenligi, mesru_menfaat]\nOlay: {user_query}\nFormat: {{\"etiketler\": []}}"
+        # Mevcut class_prompt satırını bul ve bununla değiştir:
+        class_prompt = f"""Aşağıdaki hukuki senaryoyu analiz et ve İLGİLİ TÜM etiketleri JSON formatında döndür. 
+        Eğer mesajda tehdit, şantaj veya ifşa varsa mutlaka ilgili etiketi seç.
+
+        Senaryo: {user_query}
+
+        Etiket Seçenekleri: [yetkisiz_erisim, veri_calma, mail_okuma, veri_guvenligi, mesru_menfaat, santaj, tehdit, ifsa]
+        Format: {{"etiketler": []}}"""
         raw_json = call_llm(class_prompt, "Sadece JSON döndür.", temp=0.01)
         
         try:
