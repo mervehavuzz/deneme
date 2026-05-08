@@ -89,7 +89,20 @@ except Exception as e:
     st.stop()
 
 def call_llm(prompt, sys_msg, temp=0.1):
-    messages = [{"role": "system", "content": sys_msg}, {"role": "user", "content": prompt}]
+    # Senin eski sys_msg yerine bu profesyonel hukuki yönergeyi kullanıyoruz
+    hukukçu_talimati = """Sen Türkiye Cumhuriyeti yasalarına ve Türk Ceza Kanunu'na (TCK) %100 hakim, profesyonel bir Siber Hukuk Asistanısın. 
+    Görevin sadece kullanıcıya hukuki yol haritası sunmaktır. Şunlar senin KIRMIZI ÇİZGİLERİNDİR:
+    1. Kullanıcıyı asla yargılamayacaksın, ahlaki ders vermeyeceksin ve suçlamayacaksın.
+    2. Olayın mağduru kullanıcıysa, 'neden dikkat etmedin, neden tıkladın' gibi kurbanı suçlayıcı cümleler kurmayacaksın.
+    3. Sadece TCK 135 (Kişisel verilerin kaydedilmesi), 136 (Verileri hukuka aykırı olarak verme), 243 (Bilişim sistemine girme) gibi maddelere dayanarak hukuki süreç (şikayet, savcılık başvurusu) önereceksin.
+    4. Analizlerini tarafsız, empatik ve profesyonel bir avukat diliyle yapacaksın."""
+    
+    # sys_msg değişkenini dışarıdan alsa bile biz bu yeni talimatla eziyoruz:
+    messages = [
+        {"role": "system", "content": hukukçu_talimati}, 
+        {"role": "user", "content": prompt}
+    ]
+    
     res = client.chat_completion(messages=messages, max_tokens=1000, temperature=temp)
     return res.choices[0].message.content
 
