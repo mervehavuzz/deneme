@@ -36,7 +36,7 @@ HUKUK_DB = {
     "acik_riza": {"madde": "KVKK Madde 5/1", "aciklama": "Açık rıza ile veri işleme."}
     "santaj": {"madde": "TCK 107", "aciklama": "Şantaj suçu."},
 "tehdit": {"madde": "TCK 106", "aciklama": "Tehdit suçu."},
-"ifsa": {"madde": "TCK 134", "aciklama": "Özel hayatın gizliliğini ihlal."}
+"ifsa": {"madde": "TCK 134", "aciklama": "Özel hayatın gizliliğini ihlal."},
 }
 
 def retrieve_mevzuat(ilgili_maddeler):
