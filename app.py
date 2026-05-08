@@ -194,10 +194,16 @@ for msg in st.session_state.messages:
 
 if prompt := st.chat_input("Hukuki senaryoyu buraya yazın..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="👤"): st.markdown(prompt)
+    with st.chat_message("user", avatar="👤"): 
+        st.markdown(prompt)
     
     with st.chat_message("assistant", avatar="⚖️"):
-        answer = run_pipeline(prompt)
+        # 1. Filtreyi çalıştırıp ek talimatı hazırlıyoruz
+        ek_bilgi = hukuki_filtre(prompt)
+        
+        # 2. Pipeline'a 'prompt' ile 'ek_bilgi'yi birleştirip gönderiyoruz
+        answer = run_pipeline(prompt + ek_bilgi)
+        
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
         db[st.session_state.chat_id] = st.session_state.messages
