@@ -87,6 +87,37 @@ try:
 except Exception as e:
     st.error(f"API Hatası: {e}")
     st.stop()
+def hukuki_filtre(user_input):
+    """
+    Kullanıcının mesajında kritik hukuki kelimeler varsa, 
+    bunları yakalar ve LLM'e (yapay zekaya) zorunlu talimat olarak iletir.
+    """
+    kurallar = {
+        "şantaj": "TCK Madde 107 (Şantaj suçu)",
+        "tehdit": "TCK Madde 106 (Tehdit suçu)",
+        "sızdırıldı": "TCK Madde 136 (Verileri hukuka aykırı olarak verme ve yayma)",
+        "ifşa": "TCK Madde 134 (Özel hayatın gizliliğini ihlal)",
+        "izinsiz giriş": "TCK Madde 243 (Bilişim sistemine girme suçu)",
+        "hack": "TCK Madde 244 (Sistemi engelleme, bozma, verileri yok etme veya değiştirme)",
+        "küfür": "TCK Madde 125 (Hakaret suçu)",
+        "hakaret": "TCK Madde 125 (Hakaret suçu)"
+    }
+    
+    ek_talimat = ""
+    bulunan_maddeler = []
+    
+    # Kullanıcı girdisini küçük harfe çevirip kontrol ediyoruz
+    girdi_kucuk = user_input.lower()
+    
+    for anahtar_kelime, madde in kurallar.items():
+        if anahtar_kelime in girdi_kucuk:
+            bulunan_maddeler.append(madde)
+            
+    if bulunan_maddeler:
+        ek_talimat = "\n\n[KRİTİK HUKUKİ HATIRLATMA]: Bu mesajda şu suç unsurları tespit edildi: " + ", ".join(bulunan_maddeler) + ". "
+        ek_talimat += "Lütfen cevabında bu maddelere özel vurgu yap ve mağdurun haklarını bu maddeler üzerinden açıkla."
+            
+    return ek_talimat
 
 def call_llm(prompt, sys_msg, temp=0.1):
     # Senin eski sys_msg yerine bu profesyonel hukuki yönergeyi kullanıyoruz
