@@ -90,7 +90,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
     color: white !important; 
 }
 
-/* Sidebar İçindeki Butonlerin Yazı Fontunun Siyah Yapılması */
+/* Sidebar İçindeki Butonların Yazı Fontunun Siyah Yapılması */
 [data-testid="stSidebar"] button p {
     color: #1A1A1A !important;
     font-weight: 500 !important;
@@ -190,27 +190,29 @@ def run_pipeline(user_query):
 
         # Final Yazım
         st.write("✍️ Aşama 3: Rapor Oluşturuluyor...")
-        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir hukuk asistanısın. Sağlanan mevzuat metinlerini öncelikli referans kabul et, ancak olayın bağlamına göre diğer ilgili maddeleri de değerlendirmekte serbestsin. Kesin hüküm kurmaktan kaçınarak ihtimaller üzerinden profesyonel bir analiz yap."""
+        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) ve idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Kesin hüküm kurmaktan kaçınarak profesyonel bir analiz yap."""
+        
         gen_prompt = f"""Olay: {user_query}
         Öncelikli İlgili Maddeler: {maddeler}
         Mevzuat Metinleri: {mevzuat_metni}
         
-        Lütfen cevabını KESİNLİKLE aşağıdaki başlıklara ve sıraya göre, yapılandırılmış olarak oluştur:
+        Lütfen cevabını KESİNLİKLE aşağıdaki şablon, başlıklar ve kurallar çerçevesinde yapılandır:
         
         OLAYIN HUKUKİ NİTELİĞİ
-        (Olayın genel hukuk sistemindeki yeri)
+        (Vakanın siber hukuk alanındaki genel tanımı)
         
         OLASI SUÇ VE İHLALLER
-        (Madde numaralarıyla ihtiyatlı değerlendirme, örn: "gündeme gelebilir")
+        - Ceza Hukuku (TCK): (Failin somut hangi hareketi hangi TCK maddesindeki suçu oluşturabilir? Kesin hüküm vermeden, ihtiyatlı bir dille açıkla.)
+        - İdare Hukuku (KVKK): (Burada sistemi işleten kurumun/veri sorumlusunun bir veri ihlali veya güvenlik zafiyeti var mıdır? KVKK Madde 12 kapsamında değerlendirilebilir mi?)
         
         HUKUKİ DEĞERLENDİRME
-        (Vakanın analiz edilmesi)
+        (Somut fail davranışını temel alarak, olayın gelişimini hukuk süzgecinden geçir. Failin 'başkasına ait açık oturumu kullanması' veya 'izinsiz girmesi' fiillerini ceza hukuku ve idare hukuku ayrımına sadık kalarak analiz et.)
         
         PRATİK OLARAK YAPILABİLECEKLER
-        (Örn: ekran görüntüsü alma, log kaydetme, şifre değiştirme, 2FA açma, platforma bildirme vb.)
+        (Mağdurun siber güvenlik ve delil tespiti açısından yapması gereken somut eylemler. Örn: Ekran görüntüsü alma, platform yetkililerine/sistem yöneticilerine durumu hemen bildirme, oturumları uzaktan kapatma vb. Uydurma veya imkansız tavsiyeler verme.)
         
         RESMİ BAŞVURU YOLLARI
-        (Savcılık, karakol veya mahkeme süreçleri)"""
+        (Cumhuriyet Başsavcılığı'na siber suçlar bürosu üzerinden suç duyurusunda bulunulması, idari şikayet mekanizmaları veya kurumsal disiplin süreçleri hakkında yasal yolları belirt.)"""
         
         final = call_llm(gen_prompt, gen_sys, temp=0.2)
         status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
@@ -235,7 +237,6 @@ with st.sidebar:
     
     # Geçmiş analizleri listeleme
     for cid in sorted(db.keys(), reverse=True):
-        # Eğer bu chat_id için kaydedilmiş anlamlı bir başlık yoksa ilk mesajdan üret veya id'yi kısaltıp kullan
         if cid in db and db[cid]:
             first_user_msg = next((m["content"] for m in db[cid] if m["role"] == "user"), "")
             if first_user_msg:
