@@ -1,27 +1,3 @@
-Cevapların yarıda kesilmesi yazmış olduğun Python koduyla değil, tamamen **Hugging Face API sunucusu ve kullandığımız modelin (Qwen 2.5 7B) kapasite sınırları** ile alakalıdır.
-
-Bu durumun arkasındaki 3 teknik nedeni ve bunu kod üzerinden nasıl çözebileceğimizi şöyle özetleyebilirim:
-
-### 1. `max_tokens` Sınırı (En Yaygın Sebep)
-
-Kodunun `call_llm` fonksiyonunda model çağrılırken `max_tokens=1000` olarak ayarlanmış. 1000 token, Türkçe kelime yapısında (ekler ve karakterler nedeniyle) yaklaşık **500-600 kelimeye** denk gelir. Model, hazırladığımız o detaylı 5 maddelik hukuki şablonu doldururken çok uzun ve detaylı cümleler kurarsa 1000 limitine ulaştığı an kelimenin ortasında çat diye kesilir.
-
-### 2. Hugging Face Ücretsiz Sunucu Zaman Aşımı (Timeout)
-
-Ücretsiz API kullandığımız için, Hugging Face sunucuları bazen yoğun olduğunda modelin cevabı üretmesi uzun sürer. Sunucu belli bir saniyeden sonra "üretim çok uzun sürdü" diyerek işlemi yarıda kesebilir.
-
----
-
-### 🛠️ Kod Üzerinden Bu Sorunu Nasıl Çözeriz?
-
-Bunu engellemek için kodunda **iki küçük parametreyi** optimize etmeliyiz:
-
-1. `max_tokens` değerini **1500**'e çıkararak modele daha geniş bir yazım alanı tanıyacağız.
-2. `temperature` (yaratıcılık) değerini `0.2` yerine `0.3` veya `0.4` yaparak modelin kelime tekrarlarına girip kendini kilitlemesini engelleyeceğiz.
-
-İşte bu akıllı limit artırımını barındıran ve diğer tüm özellikleri koruyan **TAM VE GÜNCEL KOD SÜRÜMÜ**:
-
-```python
 import streamlit as st
 from huggingface_hub import InferenceClient
 import json
@@ -281,5 +257,3 @@ if prompt := st.chat_input("Hukuki senaryoyu buraya yazın..."):
         
         db[st.session_state.chat_id] = st.session_state.messages
         save_db(db)
-
-```
