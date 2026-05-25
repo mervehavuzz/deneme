@@ -4,21 +4,11 @@ import json
 import os
 import re
 from datetime import datetime
-from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 # ─────────────────────────────────────────
-# 1. TARAYICI BAZLI VERİTABANI FONKSİYONLARI
+# 1. VERİTABANI FONKSİYONLARI (EN ÜSTTE OLMALI)
 # ─────────────────────────────────────────
-def get_browser_session_id() -> str:
-    """Her tarayıcı sekmesine özel benzersiz bir ID döner, böylece geçmişler karışmaz."""
-    ctx = get_script_run_ctx()
-    if ctx is not None:
-        return ctx.session_id
-    return "default_session"
-
-# Her tarayıcı sekmesinin kendi özel geçmiş dosyası olacak
-SESSION_ID = get_browser_session_id()
-DB_FILE = f"chat_history_{SESSION_ID}.json"
+DB_FILE = "chat_history.json"
 
 def load_db() -> dict:
     if os.path.exists(DB_FILE):
@@ -67,11 +57,13 @@ def retrieve_mevzuat(ilgili_maddeler):
         with open("mevzuat.txt", "r", encoding="utf-8") as f:
             lines = f.readlines()
             for madde in ilgili_maddeler:
-                match = re.search(r'\d+', madde)
+                match = re.search(r'\d+', madde) # Madde içindeki asıl numarayı yakala
                 if match:
                     clean_madde = match.group(0)
                     for line in lines:
+                        # Regex tam kelime eşleşmesi ile hatalı eşleşmeleri engelle (Örn: 134 -> 1134 olmasın)
                         if re.search(rf'\b{clean_madde}\b', line):
+                            # Set() kullanmadan listeye ekle, böylece okuma sırası korunur ve tekrar engellenir
                             if line.strip() not in bulunanlar:
                                 bulunanlar.append(line.strip())
         return "\n".join(bulunanlar) if bulunanlar else "İlgili mevzuat metni dosyada bulunamadı."
@@ -125,6 +117,10 @@ except Exception as e:
     st.stop()
 
 def hukuki_filtre(user_input):
+    """
+    Kullanıcının mesajında kritik kelimeler varsa, 
+    bunları potansiyel hukuki risk alanları olarak tespit eder ve LLM'e ihtiyatlı bir sinyal olarak iletir.
+    """
     kurallar = {
         "şantaj": "Şantaj suçu (Örn: TCK 107) ihtimali",
         "tehdit": "Tehdit suçu (Örn: TCK 106) ihtimali",
@@ -138,6 +134,7 @@ def hukuki_filtre(user_input):
     
     ek_talimat = ""
     bulunan_maddeler = []
+    
     girdi_kucuk = user_input.lower()
     
     for anahtar_kelime, madde in kurallar.items():
@@ -151,33 +148,32 @@ def hukuki_filtre(user_input):
     return ek_talimat
 
 def call_llm(prompt, sys_msg, temp=0.1):
-    hukukçu_talimati = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı og profesyonel bir Siber Hukuk Asistanısın. 
+    hukukçu_talimati = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın. 
     Görevin kullanıcıya olası hukuki durumlar ve pratik adımlar hakkında rehberlik sunmaktır. Şunlar senin KIRMIZI ÇİZGİLERİNDİR:
     1. Kullanıcıyı asla yargılamayacaksın, ahlaki ders vermeyeceksin ve kurbanı suçlayıcı cümleler kurmayacaksın.
     2. Kesinlikle "şu suç oluşmuştur", "ceza alır" gibi kesin hüküm bildiren ifadeler KULLANMAYACAKSIN. Bunun yerine daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde", "olayın detayına göre" gibi ihtiyatlı hukuk dili kullanacaksın.
     3. Olayın bağlamına göre TCK 106, 107, 125, 123, 134, 135, 136, 157, 243, 244 ve KVKK gibi ilgili tüm maddeleri özgürce değerlendirebilirsin.
-    4. Analizlerini tarafsız, empatik ve siber hukuka uygun yapacaksın."""
+    4. Analizlerini tarafsız, empatik ve hukuki terminolojiye uygun yapacaksın."""
     
     messages = [
         {"role": "system", "content": hukukçu_talimati}, 
         {"role": "user", "content": prompt}
     ]
-    # Yarıda kesilmeleri engellemek için max_tokens değerini 1500'e yükselttik
-    res = client.chat_completion(messages=messages, max_tokens=1500, temperature=temp)
+    
+    res = client.chat_completion(messages=messages, max_tokens=1000, temperature=temp)
     return res.choices[0].message.content
 
 def run_pipeline(user_query):
-    # ─── SOHBET VE SELAMLAMA KONTROLÜ ───
-    temiz_girdi = user_query.strip().lower()
-    selamlar = ["merhaba", "selam", "mrb", "slm", "hello", "hi", "iyi günler", "iyi akşamlar", "hey", "nasılsın", "kimsin"]
-    
-    if temiz_girdi in selamlar or len(user_query.strip()) < 4:
-        return "Merhaba! Ben Siber Hukuk Analiz Asistanı. Yaşadığınız siber mağduriyetleri, şüpheli internet olaylarını veya dijital platformlardaki hukuki sorunlarınızı buraya yazarak analiz raporu oluşturabilirsiniz. Size nasıl yardımcı olabilirim?"
-
     with st.status("⚖️ Hukuk Motoru Analiz Yapıyor...", expanded=True) as status:
         # Sınıflandırma
         st.write("🔍 Aşama 1: Vaka Sınıflandırılıyor...")
-        class_prompt = f"""Aşağıdaki hukuki senaryoyu analiz et ve İLGİLİ TÜM etiketleri JSON formatında döndür. Birden fazla etiket seçebilirsin. Senaryo: {user_query} Etiket Seçenekleri: [hesap_ele_gecirme, dolandiricilik, oltalama, kimlik_taklidi, taciz, ozel_goruntu_ifsasi, sosyal_medya_erisim, veri_ihlali, tehdit, santaj, hakaret, platform_sorumlulugu, yetkisiz_erisim, sistem_bozma, veri_calma, mail_okuma, veri_guvenligi, mesru_menfaat, acik_riza] Format: {{"etiketler": []}}"""
+        class_prompt = f"""Aşağıdaki hukuki senaryoyu analiz et ve İLGİLİ TÜM etiketleri JSON formatında döndür. 
+        Birden fazla etiket seçebilirsin.
+
+        Senaryo: {user_query}
+
+        Etiket Seçenekleri: [hesap_ele_gecirme, dolandiricilik, oltalama, kimlik_taklidi, taciz, ozel_goruntu_ifsasi, sosyal_medya_erisim, veri_ihlali, tehdit, santaj, hakaret, platform_sorumlulugu, yetkisiz_erisim, sistem_bozma, veri_calma, mail_okuma, veri_guvenligi, mesru_menfaat, acik_riza]
+        Format: {{"etiketler": []}}"""
         raw_json = call_llm(class_prompt, "Sadece JSON döndür.", temp=0.01)
         
         try:
@@ -188,7 +184,7 @@ def run_pipeline(user_query):
         st.write("⚙️ Aşama 2: Mevzuat Verileri Çekiliyor...")
         maddeler = [HUKUK_DB[e]["madde"] for e in secilenler if e in HUKUK_DB]
         if any("TCK" in m for m in maddeler) and "KVKK Madde 5/2-f" in maddeler:
-            maddeler.remove("KVKK Madde 5/2-f")
+            maddeler.remove("KVKK Madde 5/2-f") # Suç varsa meşru menfaat tartışılamaz
         
         mevzuat_metni = retrieve_mevzuat(maddeler)
 
@@ -196,10 +192,29 @@ def run_pipeline(user_query):
         st.write("✍️ Aşama 3: Rapor Oluşturuluyor...")
         gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) ve idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Kesin hüküm kurmaktan kaçınarak profesyonel bir analiz yap."""
         
-        gen_prompt = f"""Olay: {user_query} Öncelikli İlgili Maddeler: {maddeler} Mevzuat Metinleri: {mevzuat_metni} Lütfen cevabını KESİNLİKLE aşağıdaki şablon, başlıklar ve kurallar çerçevesinde yapılandır: OLAYIN HUKUKİ NİTELİĞİ (Olayın genel hukuk sistemindeki yeri) OLASI SUÇ VE İHLALLER - Ceza Hukuku (TCK): (Failin somut hangi hareketi hangi TCK maddesindeki suçu oluşturabilir? Kesin hüküm vermeden, ihtiyatlı bir dille açıkla.) - İdare Hukuku (KVKK): (Burada sistemi işleten kurumun/veri sorumlusunun bir veri ihlali veya güvenlik zafiyeti var mıdır? KVKK Madde 12 kapsamında değerlendirilebilir mi?) HUKUKİ DEĞERLENDİRME (Somut fail davranışını temel alarak, olayın gelişimini hukuk süzgecinden geçir. Failin 'başkasına ait açık oturumu kullanması' veya 'izinsiz girmesi' fiillerini ceza hukuku ve idare hukuku ayrımına sadık kalarak analiz et.) PRATİK OLARAK YAPILABİLECEKLER (Mağdurun siber güvenlik ve delil tespiti açısından yapması gereken somut eylemler. Örn: Ekran görüntüsü alma, platform yetkililerine/sistem yöneticilerine durumu hemen bildirme, oturumları uzaktan kapatma vb. Uydurma veya imkansız tavsiyeler verme.) RESMİ BAŞVURU YOLLARI (Cumhuriyet Başsavcılığı'na siber suçlar bürosu üzerinden suç duyurusunda bulunulması, idari şikayet mekanizmaları veya kurumsal disiplin süreçleri hakkında yasal yolları belirt.)"""
+        gen_prompt = f"""Olay: {user_query}
+        Öncelikli İlgili Maddeler: {maddeler}
+        Mevzuat Metinleri: {mevzuat_metni}
         
-        # Akıcı üretim için temp değerini hafifçe 0.3'e çıkardık
-        final = call_llm(gen_prompt, gen_sys, temp=0.3)
+        Lütfen cevabını KESİNLİKLE aşağıdaki şablon, başlıklar ve kurallar çerçevesinde yapılandır:
+        
+        OLAYIN HUKUKİ NİTELİĞİ
+        (Vakanın siber hukuk alanındaki genel tanımı)
+        
+        OLASI SUÇ VE İHLALLER
+        - Ceza Hukuku (TCK): (Failin somut hangi hareketi hangi TCK maddesindeki suçu oluşturabilir? Kesin hüküm vermeden, ihtiyatlı bir dille açıkla.)
+        - İdare Hukuku (KVKK): (Burada sistemi işleten kurumun/veri sorumlusunun bir veri ihlali veya güvenlik zafiyeti var mıdır? KVKK Madde 12 kapsamında değerlendirilebilir mi?)
+        
+        HUKUKİ DEĞERLENDİRME
+        (Somut fail davranışını temel alarak, olayın gelişimini hukuk süzgecinden geçir. Failin 'başkasına ait açık oturumu kullanması' veya 'izinsiz girmesi' fiillerini ceza hukuku ve idare hukuku ayrımına sadık kalarak analiz et.)
+        
+        PRATİK OLARAK YAPILABİLECEKLER
+        (Mağdurun siber güvenlik ve delil tespiti açısından yapması gereken somut eylemler. Örn: Ekran görüntüsü alma, platform yetkililerine/sistem yöneticilerine durumu hemen bildirme, oturumları uzaktan kapatma vb. Uydurma veya imkansız tavsiyeler verme.)
+        
+        RESMİ BAŞVURU YOLLARI
+        (Cumhuriyet Başsavcılığı'na siber suçlar bürosu üzerinden suç duyurusunda bulunulması, idari şikayet mekanizmaları veya kurumsal disiplin süreçleri hakkında yasal yolları belirt.)"""
+        
+        final = call_llm(gen_prompt, gen_sys, temp=0.2)
         status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
     return final
 
@@ -249,11 +264,15 @@ if prompt := st.chat_input("Hukuki senaryoyu buraya yazın..."):
         st.markdown(prompt)
     
     with st.chat_message("assistant", avatar="⚖️"):
+        # 1. Filtreyi çalıştırıp ek talimatı hazırlıyoruz
         ek_bilgi = hukuki_filtre(prompt)
+        
+        # 2. Pipeline'a 'prompt' ile 'ek_bilgi'yi birleştirip gönderiyoruz
         answer = run_pipeline(prompt + ek_bilgi)
         
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
         
+        # Geçmişe kaydetme ve veritabanı güncelleme
         db[st.session_state.chat_id] = st.session_state.messages
         save_db(db)
