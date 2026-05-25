@@ -85,6 +85,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
     background: linear-gradient(160deg, #5B2FD9 0%, #7C3FFC 40%, #6A2EE8 100%) !important;
 }
 [data-testid="stSidebar"] * { color: white !important; }
+[data-testid="stSidebar"] .stButton button { color: black !important; }
 
 /* Mesaj Balonları */
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
