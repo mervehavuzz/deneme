@@ -1,3 +1,27 @@
+Cevapların yarıda kesilmesi yazmış olduğun Python koduyla değil, tamamen **Hugging Face API sunucusu ve kullandığımız modelin (Qwen 2.5 7B) kapasite sınırları** ile alakalıdır.
+
+Bu durumun arkasındaki 3 teknik nedeni ve bunu kod üzerinden nasıl çözebileceğimizi şöyle özetleyebilirim:
+
+### 1. `max_tokens` Sınırı (En Yaygın Sebep)
+
+Kodunun `call_llm` fonksiyonunda model çağrılırken `max_tokens=1000` olarak ayarlanmış. 1000 token, Türkçe kelime yapısında (ekler ve karakterler nedeniyle) yaklaşık **500-600 kelimeye** denk gelir. Model, hazırladığımız o detaylı 5 maddelik hukuki şablonu doldururken çok uzun ve detaylı cümleler kurarsa 1000 limitine ulaştığı an kelimenin ortasında çat diye kesilir.
+
+### 2. Hugging Face Ücretsiz Sunucu Zaman Aşımı (Timeout)
+
+Ücretsiz API kullandığımız için, Hugging Face sunucuları bazen yoğun olduğunda modelin cevabı üretmesi uzun sürer. Sunucu belli bir saniyeden sonra "üretim çok uzun sürdü" diyerek işlemi yarıda kesebilir.
+
+---
+
+### 🛠️ Kod Üzerinden Bu Sorunu Nasıl Çözeriz?
+
+Bunu engellemek için kodunda **iki küçük parametreyi** optimize etmeliyiz:
+
+1. `max_tokens` değerini **1500**'e çıkararak modele daha geniş bir yazım alanı tanıyacağız.
+2. `temperature` (yaratıcılık) değerini `0.2` yerine `0.3` veya `0.4` yaparak modelin kelime tekrarlarına girip kendini kilitlemesini engelleyeceğiz.
+
+İşte bu akıllı limit artırımını barındıran ve diğer tüm özellikleri koruyan **TAM VE GÜNCEL KOD SÜRÜMÜ**:
+
+```python
 import streamlit as st
 from huggingface_hub import InferenceClient
 import json
@@ -151,26 +175,26 @@ def hukuki_filtre(user_input):
     return ek_talimat
 
 def call_llm(prompt, sys_msg, temp=0.1):
-    hukukçu_talimati = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın. 
+    hukukçu_talimati = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı og profesyonel bir Siber Hukuk Asistanısın. 
     Görevin kullanıcıya olası hukuki durumlar ve pratik adımlar hakkında rehberlik sunmaktır. Şunlar senin KIRMIZI ÇİZGİLERİNDİR:
     1. Kullanıcıyı asla yargılamayacaksın, ahlaki ders vermeyeceksin ve kurbanı suçlayıcı cümleler kurmayacaksın.
     2. Kesinlikle "şu suç oluşmuştur", "ceza alır" gibi kesin hüküm bildiren ifadeler KULLANMAYACAKSIN. Bunun yerine daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde", "olayın detayına göre" gibi ihtiyatlı hukuk dili kullanacaksın.
     3. Olayın bağlamına göre TCK 106, 107, 125, 123, 134, 135, 136, 157, 243, 244 ve KVKK gibi ilgili tüm maddeleri özgürce değerlendirebilirsin.
-    4. Analizlerini tarafsız, empatik og siber hukuka uygun yapacaksın."""
+    4. Analizlerini tarafsız, empatik ve siber hukuka uygun yapacaksın."""
     
     messages = [
         {"role": "system", "content": hukukçu_talimati}, 
         {"role": "user", "content": prompt}
     ]
-    res = client.chat_completion(messages=messages, max_tokens=1000, temperature=temp)
+    # Yarıda kesilmeleri engellemek için max_tokens değerini 1500'e yükselttik
+    res = client.chat_completion(messages=messages, max_tokens=1500, temperature=temp)
     return res.choices[0].message.content
 
 def run_pipeline(user_query):
-    # ─── SOHBET VE SELAMLAMA KONTROLÜ (YENİ) ───
+    # ─── SOHBET VE SELAMLAMA KONTROLÜ ───
     temiz_girdi = user_query.strip().lower()
     selamlar = ["merhaba", "selam", "mrb", "slm", "hello", "hi", "iyi günler", "iyi akşamlar", "hey", "nasılsın", "kimsin"]
     
-    # Eğer girdi sadece selamlama kelimelerinden oluşuyor veya çok kısaysa
     if temiz_girdi in selamlar or len(user_query.strip()) < 4:
         return "Merhaba! Ben Siber Hukuk Analiz Asistanı. Yaşadığınız siber mağduriyetleri, şüpheli internet olaylarını veya dijital platformlardaki hukuki sorunlarınızı buraya yazarak analiz raporu oluşturabilirsiniz. Size nasıl yardımcı olabilirim?"
 
@@ -194,11 +218,12 @@ def run_pipeline(user_query):
 
         # Final Yazım
         st.write("✍️ Aşama 3: Rapor Oluşturuluyor...")
-        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) og idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Kesin hüküm kurmaktan kaçınarak profesyonel bir analiz yap."""
+        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) ve idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Kesin hüküm kurmaktan kaçınarak profesyonel bir analiz yap."""
         
         gen_prompt = f"""Olay: {user_query} Öncelikli İlgili Maddeler: {maddeler} Mevzuat Metinleri: {mevzuat_metni} Lütfen cevabını KESİNLİKLE aşağıdaki şablon, başlıklar ve kurallar çerçevesinde yapılandır: OLAYIN HUKUKİ NİTELİĞİ (Olayın genel hukuk sistemindeki yeri) OLASI SUÇ VE İHLALLER - Ceza Hukuku (TCK): (Failin somut hangi hareketi hangi TCK maddesindeki suçu oluşturabilir? Kesin hüküm vermeden, ihtiyatlı bir dille açıkla.) - İdare Hukuku (KVKK): (Burada sistemi işleten kurumun/veri sorumlusunun bir veri ihlali veya güvenlik zafiyeti var mıdır? KVKK Madde 12 kapsamında değerlendirilebilir mi?) HUKUKİ DEĞERLENDİRME (Somut fail davranışını temel alarak, olayın gelişimini hukuk süzgecinden geçir. Failin 'başkasına ait açık oturumu kullanması' veya 'izinsiz girmesi' fiillerini ceza hukuku ve idare hukuku ayrımına sadık kalarak analiz et.) PRATİK OLARAK YAPILABİLECEKLER (Mağdurun siber güvenlik ve delil tespiti açısından yapması gereken somut eylemler. Örn: Ekran görüntüsü alma, platform yetkililerine/sistem yöneticilerine durumu hemen bildirme, oturumları uzaktan kapatma vb. Uydurma veya imkansız tavsiyeler verme.) RESMİ BAŞVURU YOLLARI (Cumhuriyet Başsavcılığı'na siber suçlar bürosu üzerinden suç duyurusunda bulunulması, idari şikayet mekanizmaları veya kurumsal disiplin süreçleri hakkında yasal yolları belirt.)"""
         
-        final = call_llm(gen_prompt, gen_sys, temp=0.2)
+        # Akıcı üretim için temp değerini hafifçe 0.3'e çıkardık
+        final = call_llm(gen_prompt, gen_sys, temp=0.3)
         status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
     return final
 
@@ -256,3 +281,5 @@ if prompt := st.chat_input("Hukuki senaryoyu buraya yazın..."):
         
         db[st.session_state.chat_id] = st.session_state.messages
         save_db(db)
+
+```
