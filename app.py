@@ -80,12 +80,21 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 .stApp { background: #F8F7FF !important; }
 
-/* Sidebar Tasarımı */
+/* Sidebar Genel Arka Planı */
 [data-testid="stSidebar"] {
     background: linear-gradient(160deg, #5B2FD9 0%, #7C3FFC 40%, #6A2EE8 100%) !important;
 }
-[data-testid="stSidebar"] * { color: white !important; }
-[data-testid="stSidebar"] .stButton button { color: black !important; }
+
+/* Sidebar İçindeki Normal Başlık ve Düz Metinlerin Beyaz Kalması */
+[data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] div { 
+    color: white !important; 
+}
+
+/* Sidebar İçindeki Butonların Yazı Fontunun Siyah Yapılması */
+[data-testid="stSidebar"] button p {
+    color: #1A1A1A !important;
+    font-weight: 500 !important;
+}
 
 /* Mesaj Balonları */
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
