@@ -156,7 +156,7 @@ def call_llm(prompt, sys_msg, temp=0.1):
     1. Kullanıcıyı asla yargılamayacaksın, ahlaki ders vermeyeceksin ve kurbanı suçlayıcı cümleler kurmayacaksın.
     2. Kesinlikle "şu suç oluşmuştur", "ceza alır" gibi kesin hüküm bildiren ifadeler KULLANMAYACAKSIN. Bunun yerine daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde", "olayın detayına göre" gibi ihtiyatlı hukuk dili kullanacaksın.
     3. Olayın bağlamına göre TCK 106, 107, 125, 123, 134, 135, 136, 157, 243, 244 ve KVKK gibi ilgili tüm maddeleri özgürce değerlendirebilirsin.
-    4. Analizlerini tarafsız, empatik ve hukuki terminolojiye uygun yapacaksın."""
+    4. Analizlerini tarafsız, empatik og siber hukuka uygun yapacaksın."""
     
     messages = [
         {"role": "system", "content": hukukçu_talimati}, 
@@ -166,6 +166,14 @@ def call_llm(prompt, sys_msg, temp=0.1):
     return res.choices[0].message.content
 
 def run_pipeline(user_query):
+    # ─── SOHBET VE SELAMLAMA KONTROLÜ (YENİ) ───
+    temiz_girdi = user_query.strip().lower()
+    selamlar = ["merhaba", "selam", "mrb", "slm", "hello", "hi", "iyi günler", "iyi akşamlar", "hey", "nasılsın", "kimsin"]
+    
+    # Eğer girdi sadece selamlama kelimelerinden oluşuyor veya çok kısaysa
+    if temiz_girdi in selamlar or len(user_query.strip()) < 4:
+        return "Merhaba! Ben Siber Hukuk Analiz Asistanı. Yaşadığınız siber mağduriyetleri, şüpheli internet olaylarını veya dijital platformlardaki hukuki sorunlarınızı buraya yazarak analiz raporu oluşturabilirsiniz. Size nasıl yardımcı olabilirim?"
+
     with st.status("⚖️ Hukuk Motoru Analiz Yapıyor...", expanded=True) as status:
         # Sınıflandırma
         st.write("🔍 Aşama 1: Vaka Sınıflandırılıyor...")
@@ -186,7 +194,7 @@ def run_pipeline(user_query):
 
         # Final Yazım
         st.write("✍️ Aşama 3: Rapor Oluşturuluyor...")
-        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) ve idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Kesin hüküm kurmaktan kaçınarak profesyonel bir analiz yap."""
+        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) og idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Kesin hüküm kurmaktan kaçınarak profesyonel bir analiz yap."""
         
         gen_prompt = f"""Olay: {user_query} Öncelikli İlgili Maddeler: {maddeler} Mevzuat Metinleri: {mevzuat_metni} Lütfen cevabını KESİNLİKLE aşağıdaki şablon, başlıklar ve kurallar çerçevesinde yapılandır: OLAYIN HUKUKİ NİTELİĞİ (Olayın genel hukuk sistemindeki yeri) OLASI SUÇ VE İHLALLER - Ceza Hukuku (TCK): (Failin somut hangi hareketi hangi TCK maddesindeki suçu oluşturabilir? Kesin hüküm vermeden, ihtiyatlı bir dille açıkla.) - İdare Hukuku (KVKK): (Burada sistemi işleten kurumun/veri sorumlusunun bir veri ihlali veya güvenlik zafiyeti var mıdır? KVKK Madde 12 kapsamında değerlendirilebilir mi?) HUKUKİ DEĞERLENDİRME (Somut fail davranışını temel alarak, olayın gelişimini hukuk süzgecinden geçir. Failin 'başkasına ait açık oturumu kullanması' veya 'izinsiz girmesi' fiillerini ceza hukuku ve idare hukuku ayrımına sadık kalarak analiz et.) PRATİK OLARAK YAPILABİLECEKLER (Mağdurun siber güvenlik ve delil tespiti açısından yapması gereken somut eylemler. Örn: Ekran görüntüsü alma, platform yetkililerine/sistem yöneticilerine durumu hemen bildirme, oturumları uzaktan kapatma vb. Uydurma veya imkansız tavsiyeler verme.) RESMİ BAŞVURU YOLLARI (Cumhuriyet Başsavcılığı'na siber suçlar bürosu üzerinden suç duyurusunda bulunulması, idari şikayet mekanizmaları veya kurumsal disiplin süreçleri hakkında yasal yolları belirt.)"""
         
@@ -211,7 +219,7 @@ with st.sidebar:
         st.rerun()
     st.markdown("---")
     
-    # Geçmiş analizleri listeleme (Sadece mevcut tarayıcı oturumuna ait olanlar gelir)
+    # Geçmiş analizleri listeleme
     for cid in sorted(db.keys(), reverse=True):
         if cid in db and db[cid]:
             first_user_msg = next((m["content"] for m in db[cid] if m["role"] == "user"), "")
