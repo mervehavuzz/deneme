@@ -90,7 +90,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
     color: white !important; 
 }
 
-/* Sidebar İçindeki Butonların Yazı Fontunun Siyah Yapılması */
+/* Sidebar İçindeki Butonlerin Yazı Fontunun Siyah Yapılması */
 [data-testid="stSidebar"] button p {
     color: #1A1A1A !important;
     font-weight: 500 !important;
@@ -222,6 +222,7 @@ def run_pipeline(user_query):
 db = load_db()
 if "chat_id" not in st.session_state: st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 if "messages" not in st.session_state: st.session_state.messages = []
+if "chat_titles" not in st.session_state: st.session_state.chat_titles = {}
 
 with st.sidebar:
     st.markdown("### ⚖️ Siber Hukuk Analiz")
@@ -231,8 +232,21 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
     st.markdown("---")
+    
+    # Geçmiş analizleri listeleme
     for cid in sorted(db.keys(), reverse=True):
-        if st.button(f"💬 {cid[:13]}...", key=cid, use_container_width=True):
+        # Eğer bu chat_id için kaydedilmiş anlamlı bir başlık yoksa ilk mesajdan üret veya id'yi kısaltıp kullan
+        if cid in db and db[cid]:
+            first_user_msg = next((m["content"] for m in db[cid] if m["role"] == "user"), "")
+            if first_user_msg:
+                words = first_user_msg.split()
+                display_title = " ".join(words[:4]) + ("..." if len(words) > 4 else "")
+            else:
+                display_title = f"💬 Analiz {cid[:10]}"
+        else:
+            display_title = f"💬 Analiz {cid[:10]}"
+            
+        if st.button(display_title, key=cid, use_container_width=True):
             st.session_state.chat_id = cid
             st.session_state.messages = db[cid]
             st.rerun()
@@ -257,5 +271,7 @@ if prompt := st.chat_input("Hukuki senaryoyu buraya yazın..."):
         
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
+        
+        # Geçmişe kaydetme ve veritabanı güncelleme
         db[st.session_state.chat_id] = st.session_state.messages
         save_db(db)
