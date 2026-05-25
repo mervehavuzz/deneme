@@ -1,56 +1,9 @@
-TCK (Türk Ceza Kanunu)
-TCK 106 – Tehdit
-
-Bir kişiyi, kendisine veya yakınına zarar verileceği yönünde korkutma veya tehdit etme.
-
-TCK 125 – Hakaret
-
-Bir kişiye onur, şeref ve saygınlığını zedeleyecek şekilde somut bir fiil veya olgu isnat etme.
-
-TCK 132 – Haberleşmenin gizliliğini ihlal
-
-Kişiler arasındaki haberleşmenin içeriğini hukuka aykırı şekilde öğrenme veya ifşa etme.
-
-TCK 136 – Kişisel verileri hukuka aykırı ele geçirme / yayma
-
-Kişisel verilerin izinsiz şekilde elde edilmesi, paylaşılması veya yayılması.
-
-TCK 243 – Bilişim sistemine girme
-
-Bir bilişim sistemine hukuka aykırı şekilde giriş yapma veya içeride kalma.
-
-TCK 244 – Sistemi engelleme, bozma, verileri yok etme veya değiştirme
-
-Bilişim sisteminin işleyişini bozma, verileri silme, değiştirme veya sisteme müdahale etme.
-
-TCK 158 – Nitelikli dolandırıcılık
-
-Kamu kurumu, banka, bilişim sistemleri veya dini/sosyal güven kullanılarak hile ile menfaat sağlama.
-
-TCK 245 – Banka veya kredi kartlarının kötüye kullanılması
-
-Banka/kredi kartı bilgilerini izinsiz kullanarak yarar sağlama.
-
-KVKK (Kişisel Verilerin Korunması Kanunu)
-KVKK Madde 5 – Kişisel verilerin işlenme şartları
-
-Kişisel veriler ancak şu şartlarla işlenebilir:
-
-Açık rıza
-Kanunlarda açıkça öngörülme
-Sözleşmenin kurulması veya ifası
-Hukuki yükümlülük
-Bir hakkın tesisi/kullanılması
-Meşru menfaat (temel haklara zarar vermemek şartıyla)
-KVKK Madde 6 – Özel nitelikli kişisel veriler
-
-Sağlık, ceza mahkûmiyeti, biyometrik ve genetik veriler gibi özel nitelikli verilerin daha sıkı şartlarla işlenmesini düzenler.
-
-KVKK Madde 12 – Veri güvenliği yükümlülüğü
-
-Veri sorumlusu:
-
-Verilerin hukuka aykırı işlenmesini önlemek
-Verilere yetkisiz erişimi engellemek
-Veri güvenliğini sağlamak
-İhlal durumunda Kurul’a bildirim yapmak (72 saat)
+TCK 106 - Tehdit suçu: Bir başkasını, kendisinin veya yakınının hayatına, vücut veya cinsel dokunulmazlığına yönelik bir saldırı gerçekleştireceğinden bahisle tehdit eden kişi, altı aydan iki yıla kadar hapis cezası ile cezalandırılır. Malvarlığı itibarıyla büyük bir zarara uğratacağından veya sair bir kötülük edeceğinden bahisle tehditte ise, mağdurun şikayeti üzerine, altı aya kadar hapis veya adlî para cezasına hükmolunur.
+TCK 107 - Şantaj suçu: Hakkı olan veya yükümlü olduğu bir şeyi yapacağından veya yapmayacağından bahisle, bir kimseyi kanuna aykırı veya yükümlü olmadığı bir şeyi yapmaya veya yapmamaya ya da haksız çıkar sağlamaya zorlayan kişi, bir yıldan üç yıla kadar hapis ve beşbin güne kadar adlî para cezası ile cezalandırılır. Kendisine veya başkasına yarar sağlamak maksadıyla bir kişinin şeref veya saygınlığına zarar verecek nitelikteki hususların açıklanacağı veya isnat edileceği tehdidinde bulunulması halinde de aynı ceza verilir.
+TCK 123 - Kişilerin huzur ve sükununu bozma: Sırf huzur ve sükununu bozmak maksadıyla bir kimseye ısrarlı bir şekilde; telefon edilmesi, gürültü yapılması ya da aynı maksatla hukuka aykırı başka bir davranışta bulunulması halinde, mağdurun şikayeti üzerine faile üç aydan bir yıla kadar hapis cezası verilir.
+TCK 125 - Hakaret suçu: Bir kimseye onur, şeref ve saygınlığını rencide edebilecek nitelikte somut bir fiil veya olgu isnat eden ya da sövmek suretiyle bir kimsenin onur, şeref ve saygınlığına saldıran kişi, üç aydan iki yıla kadar hapis veya adlî para cezası ile cezalandırılır. Fiilin, mağduru muhatap alan sesli, yazılı veya görüntülü bir iletiyle işlenmesi halinde, cezaya hükmolunur.
+TCK 134 - Özel hayatın gizliliğini ihlal: Kişilerin özel hayatının gizliliğini ihlal eden kimse, bir yıldan üç yıla kadar hapis cezası ile cezalandırılır. Gizliliğin görüntü veya seslerin kayda alınması suretiyle ihlal edilmesi halinde, verilecek ceza bir kat artırılır. Bu görüntü veya seslerin hukuka aykırı olarak ifşa edilmesi halinde, iki yıldan beş yıla kadar hapis cezası verilir.
+TCK 136 - Kişisel verileri hukuka aykırı olarak ele geçirme veya yayma: Kişisel verileri, hukuka aykırı olarak bir başkasına veren, yayan veya ele geçiren kişi, iki yıldan dört yıla kadar hapis cezası ile cezalandırılır.
+TCK 158 - Nitelikli dolandırıcılık: Dolandırıcılık suçunun; Bilişim sistemlerinin, banka veya kredi kurumlarının araç olarak kullanılması suretiyle işlenmesi halinde, üç yıldan on yıla kadar hapis ve beşbin güne kadar adlî para cezasına hükmolunur.
+TCK 243 - Bilişim sistemine girme: Bir bilişim sisteminin bütününe veya bir kısmına, hukuka aykırı olarak giren veya orada kalmaya devam eden kimseye bir yıla kadar hapis veya adlî para cezası verilir.
+TCK 244 - Sistemi engelleme, bozma, verileri yok etme veya değiştirme: Bir bilişim sisteminin işleyişini engelleyen veya bozan kişi, bir yıldan beş yıla kadar hapis cezası ile cezalandırılır. Bir bilişim sistemindeki verileri bozan, yok eden, değiştiren veya erişilmez kılan, sisteme veri yerleştiren, var olan verileri başka bir yere gönderen kişi, altı aydan üç yıla kadar hapis cezası ile cezalandırılır.
