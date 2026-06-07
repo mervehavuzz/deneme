@@ -239,7 +239,7 @@ with st.sidebar:
             st.session_state.messages = db[cid]
             st.rerun()
 
-st.title("🛡️ Siber Hukuk Analiz Portalı")
+st.title("Siber Hukuk Analiz Portalı")
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar="👤" if msg["role"]=="user" else "⚖️"):
