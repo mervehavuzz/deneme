@@ -120,7 +120,6 @@ except Exception as e:
 HIZLI_CONFIG = genai.GenerationConfig(
     temperature=0.2,
     max_output_tokens=OUTPUT_TOKENS,
-    thinking_config={"thinking_budget": 0},  # Thinking kapalı → hız artar
 )
 
 SISTEM_PROMPTU = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
