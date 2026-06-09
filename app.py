@@ -8,7 +8,6 @@ from datetime import datetime
 # ─────────────────────────────────────────
 # 1. TARAYICI BAZLI SEANS VE HAFIZA YÖNETİMİ
 # ─────────────────────────────────────────
-# Tarayıcı seansı boyunca verilerin kalması ve gizli sekmede karışmaması için st.session_state kullanıyoruz
 if "browser_db" not in st.session_state:
     st.session_state.browser_db = {}
 
@@ -22,45 +21,72 @@ def save_db(data: dict) -> None:
 # 2. HUKUK HAFIZASI VE MEVZUAT SİSTEMİ
 # ─────────────────────────────────────────
 HUKUK_DB = {
-    "yetkisiz_erisim": {"madde": "TCK 243", "aciklama": "Bilişim sistemine girme suçu."},
-    "sistem_bozma": {"madde": "TCK 244", "aciklama": "Sistemi engelleme, bozma, verileri yok etme."},
-    "veri_calma": {"madde": "TCK 136", "aciklama": "Kişisel verileri hukuka aykırı ele geçirme."},
-    "mail_okuma": {"madde": "TCK 132", "aciklama": "Haberleşmenin gizliliğini ihlal."},
-    "veri_guvenligi": {"madde": "KVKK Madde 12", "aciklama": "Veri güvenliği yükümlülükleri."},
-    "mesru_menfaat": {"madde": "KVKK Madde 5/2-f", "aciklama": "Meşru menfaat işleme şartı."},
-    "acik_riza": {"madde": "KVKK Madde 5/1", "aciklama": "Açık rıza ile veri işleme."},
-    "santaj": {"madde": "TCK 107", "aciklama": "Şantaj suçu."},
-    "tehdit": {"madde": "TCK 106", "aciklama": "Tehdit suçu."},
-    "ifsa": {"madde": "TCK 134", "aciklama": "Özel hayatın gizliliğini ihlal."},
-    "hesap_ele_gecirme": {"madde": "TCK 243", "aciklama": "Bilişim sistemine hukuka aykırı erişim."},
-    "dolandiricilik": {"madde": "TCK 158", "aciklama": "Bilişim sistemleri araç kılınarak veya kamu görevlisi unvanıyla dolandırıcılık."},
-    "oltalama": {"madde": "TCK 243", "aciklama": "Bilişim sistemine girme (oltalama amaçlı)."},
-    "kimlik_taklidi": {"madde": "TCK 136", "aciklama": "Başkasına ait verileri yayma/kullanma."},
-    "taciz": {"madde": "TCK 105", "aciklama": "Cinsel taciz veya TCK 123 kişilerin huzurunu bozma."},
-    "ozel_goruntu_ifsasi": {"madde": "TCK 134", "aciklama": "Özel hayatın gizliliğini ihlal (görüntü ifşası)."},
-    "sosyal_medya_erisim": {"madde": "TCK 243", "aciklama": "Sosyal medya hesabına yetcisiz erişim."},
-    "veri_ihlali": {"madde": "KVKK Madde 12", "aciklama": "Kişisel verilerin güvenliğinin ihlali."},
-    "hakaret": {"madde": "TCK 125", "aciklama": "Hakaret suçu."},
-    "platform_sorumlulugu": {"madde": "5651 Sayılı Kanun", "aciklama": "İnternet ortamında yapılan yayınların düzenlenmesi."}
+    "yetkisiz_erisim":       {"madde": "TCK 243",          "aciklama": "Bilişim sistemine girme suçu."},
+    "sistem_bozma":          {"madde": "TCK 244",          "aciklama": "Sistemi engelleme, bozma, verileri yok etme."},
+    "veri_calma":            {"madde": "TCK 136",          "aciklama": "Kişisel verileri hukuka aykırı ele geçirme."},
+    "mail_okuma":            {"madde": "TCK 132",          "aciklama": "Haberleşmenin gizliliğini ihlal."},
+    "is_yeri_gozetleme":     {"madde": "TCK 132",          "aciklama": "İşyerinde yazışmaların izlenmesi — haberleşme gizliliği ihlali."},
+    "veri_guvenligi":        {"madde": "KVKK Madde 12",    "aciklama": "Veri güvenliği yükümlülükleri."},
+    "mesru_menfaat":         {"madde": "KVKK Madde 5/2-f", "aciklama": "Meşru menfaat işleme şartı."},
+    "acik_riza":             {"madde": "KVKK Madde 5/1",   "aciklama": "Açık rıza ile veri işleme."},
+    "santaj":                {"madde": "TCK 107",          "aciklama": "Şantaj suçu — para veya yarar karşılığı tehdit."},
+    "tehdit":                {"madde": "TCK 106",          "aciklama": "Tehdit suçu."},
+    "ifsa":                  {"madde": "TCK 134",          "aciklama": "Özel hayatın gizliliğini ihlal."},
+    "hesap_ele_gecirme":     {"madde": "TCK 243",          "aciklama": "Bilişim sistemine hukuka aykırı erişim."},
+    "dolandiricilik":        {"madde": "TCK 158/2-f",      "aciklama": "Bilişim sistemleri araç kılınarak dolandırıcılık."},
+    "oltalama":              {"madde": "TCK 243",          "aciklama": "Bilişim sistemine girme (oltalama amaçlı)."},
+    "kimlik_taklidi":        {"madde": "TCK 136",          "aciklama": "Başkasına ait verileri yayma/kullanma."},
+    "taciz":                 {"madde": "TCK 105/123",      "aciklama": "Cinsel taciz veya kişilerin huzurunu bozma."},
+    "ozel_goruntu_ifsasi":   {"madde": "TCK 134+226",      "aciklama": "Özel görüntü ifşası — özel hayat gizliliği ve müstehcenlik."},
+    "sosyal_medya_erisim":   {"madde": "TCK 243",          "aciklama": "Sosyal medya hesabına yetkisiz erişim."},
+    "veri_ihlali":           {"madde": "KVKK Madde 12",    "aciklama": "Kişisel verilerin güvenliğinin ihlali."},
+    "hakaret":               {"madde": "TCK 125",          "aciklama": "Hakaret suçu."},
+    "platform_sorumlulugu":  {"madde": "5651 Sayılı Kanun","aciklama": "İnternet ortamında yapılan yayınların düzenlenmesi."},
+}
+
+# mevzuat.txt içeriği — dosya bulunamazsa bu sözlük kullanılır
+MEVZUAT_FALLBACK = {
+    "106": "TCK 106 - Tehdit suçu: Bir başkasını, kendisinin veya yakınının hayatına, vücut veya cinsel dokunulmazlığına yönelik bir saldırı gerçekleştireceğinden bahisle tehdit eden kişi, altı aydan iki yıla kadar hapis cezası ile cezalandırılır. Malvarlığı itibarıyla büyük bir zarara uğratacağından veya sair bir kötülük edeceğinden bahisle tehditte ise, mağdurun şikayeti üzerine, altı aya kadar hapis veya adlî para cezasına hükmolunur.",
+    "107": "TCK 107 - Şantaj suçu: Hakkı olan veya yükümlü olduğu bir şeyi yapacağından veya yapmayacağından bahisle, bir kimseyi kanuna aykırı veya yükümlü olmadığı bir şeyi yapmaya veya yapmamaya ya da haksız çıkar sağlamaya zorlayan kişi, bir yıldan üç yıla kadar hapis ve beşbin güne kadar adlî para cezası ile cezalandırılır. Kendisine veya başkasına yarar sağlamak maksadıyla bir kişinin şeref veya saygınlığına zarar verecek nitelikteki hususların açıklanacağı veya isnat edileceği tehdidinde bulunulması halinde de aynı ceza verilir.",
+    "123": "TCK 123 - Kişilerin huzur ve sükununu bozma: Sırf huzur ve sükununu bozmak maksadıyla bir kimseye ısrarlı bir şekilde; telefon edilmesi, gürültü yapılması ya da aynı maksatla hukuka aykırı başka bir davranışta bulunulması halinde, mağdurun şikayeti üzerine faile üç aydan bir yıla kadar hapis cezası verilir.",
+    "125": "TCK 125 - Hakaret suçu: Bir kimseye onur, şeref ve saygınlığını rencide edebilecek nitelikte somut bir fiil veya olgu isnat eden ya da sövmek suretiyle bir kimsenin onur, şeref ve saygınlığına saldıran kişi, üç aydan iki yıla kadar hapis veya adlî para cezası ile cezalandırılır.",
+    "132": "TCK 132 - Haberleşmenin gizliliğini ihlal: Kişiler arasındaki haberleşmenin gizliliğini ihlal eden kimse, bir yıldan üç yıla kadar hapis cezası ile cezalandırılır. Bu gizlilik ihlali haberleşme içeriklerinin kaydedilmesi suretiyle gerçekleşirse verilecek ceza bir kat artırılır.",
+    "134": "TCK 134 - Özel hayatın gizliliğini ihlal: Kişilerin özel hayatının gizliliğini ihlal eden kimse, bir yıldan üç yıla kadar hapis cezası ile cezalandırılır. Gizliliğin görüntü veya seslerin kayda alınması suretiyle ihlal edilmesi halinde, verilecek ceza bir kat artırılır. Bu görüntü veya seslerin hukuka aykırı olarak ifşa edilmesi halinde, iki yıldan beş yıla kadar hapis cezası verilir.",
+    "136": "TCK 136 - Kişisel verileri hukuka aykırı olarak ele geçirme veya yayma: Kişisel verileri, hukuka aykırı olarak bir başkasına veren, yayan veya ele geçiren kişi, iki yıldan dört yıla kadar hapis cezası ile cezalandırılır.",
+    "158": "TCK 158 - Nitelikli dolandırıcılık: Dolandırıcılık suçunun bilişim sistemlerinin, banka veya kredi kurumlarının araç olarak kullanılması suretiyle işlenmesi halinde, üç yıldan on yıla kadar hapis ve beşbin güne kadar adlî para cezasına hükmolunur.",
+    "243": "TCK 243 - Bilişim sistemine girme: Bir bilişim sisteminin bütününe veya bir kısmına, hukuka aykırı olarak giren veya orada kalmaya devam eden kimseye bir yıla kadar hapis veya adlî para cezası verilir.",
+    "244": "TCK 244 - Sistemi engelleme, bozma, verileri yok etme veya değiştirme: Bir bilişim sisteminin işleyişini engelleyen veya bozan kişi, bir yıldan beş yıla kadar hapis cezası ile cezalandırılır. Bir bilişim sistemindeki verileri bozan, yok eden, değiştiren veya erişilmez kılan kişi, altı aydan üç yıla kadar hapis cezası ile cezalandırılır.",
 }
 
 def retrieve_mevzuat(ilgili_maddeler):
-    if not os.path.exists("mevzuat.txt"):
-        return "Not: mevzuat.txt bulunamadı, genel bilgilerle devam ediliyor."
     bulunanlar = []
-    try:
-        with open("mevzuat.txt", "r", encoding="utf-8") as f:
-            lines = f.readlines()
+
+    # Önce dosyadan okumayı dene
+    if os.path.exists("mevzuat.txt"):
+        try:
+            with open("mevzuat.txt", "r", encoding="utf-8") as f:
+                lines = f.readlines()
             for madde in ilgili_maddeler:
                 match = re.search(r'\d+', madde)
                 if match:
-                    clean_madde = match.group(0)
+                    clean = match.group(0)
                     for line in lines:
-                        if re.search(rf'\b{clean_madde}\b', line):
-                            if line.strip() not in bulunanlar:
-                                bulunanlar.append(line.strip())
-        return "\n".join(bulunanlar) if bulunanlar else "İlgili mevzuat metni dosyada bulunamadı."
-    except: return "Mevzuat okunurken hata oluştu."
+                        if re.search(rf'\b{clean}\b', line) and line.strip() not in bulunanlar:
+                            bulunanlar.append(line.strip())
+            if bulunanlar:
+                return "\n".join(bulunanlar)
+        except:
+            pass
+
+    # Dosya yoksa veya boş gelirse fallback sözlüğünü kullan
+    for madde in ilgili_maddeler:
+        match = re.search(r'\d+', madde)
+        if match:
+            key = match.group(0)
+            if key in MEVZUAT_FALLBACK and MEVZUAT_FALLBACK[key] not in bulunanlar:
+                bulunanlar.append(MEVZUAT_FALLBACK[key])
+
+    return "\n".join(bulunanlar) if bulunanlar else "İlgili mevzuat metni bulunamadı."
 
 # ─────────────────────────────────────────
 # 3. SAYFA AYARLARI VE TASARIM (CSS)
@@ -73,28 +99,25 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 .stApp { background: #F8F7FF !important; }
 
-/* Sidebar Genel Arka Planı */
 [data-testid="stSidebar"] {
     background: linear-gradient(160deg, #5B2FD9 0%, #7C3FFC 40%, #6A2EE8 100%) !important;
 }
-
-/* Sidebar İçindeki Normal Başlık ve Düz Metinlerin Beyaz Kalması */
-[data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] div { 
-    color: white !important; 
-}
-
-/* Sidebar İçindeki Butonların Yazı Fontunun Siyah Yapılması */
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] div { color: white !important; }
 [data-testid="stSidebar"] button p {
     color: #1A1A1A !important;
     font-weight: 500 !important;
 }
 
-/* Mesaj Balonları */
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
-    background: #7C5CFC !important; border-radius: 15px 15px 5px 15px !important;
+    background: #7C5CFC !important;
+    border-radius: 15px 15px 5px 15px !important;
 }
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
-    background: white !important; border: 1px solid #E4E0FF !important; border-radius: 5px 15px 15px 15px !important;
+    background: white !important;
+    border: 1px solid #E4E0FF !important;
+    border-radius: 5px 15px 15px 15px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -109,109 +132,154 @@ except Exception as e:
     st.error(f"API Hatası: {e}")
     st.stop()
 
-def hukuki_filtre(user_input):
-    kurallar = {
-        "şantaj": "Şantaj suçu (Örn: TCK 107) ihtimali",
-        "tehdit": "Tehdit suçu (Örn: TCK 106) ihtimali",
-        "sızdırıldı": "Verileri hukuka aykırı olarak verme veya yayma ihtimali (Örn: TCK 136)",
-        "ifşa": "Özel hayatın gizliliğini ihlal ihtimali (Örn: TCK 134)",
-        "izinsiz giriş": "Bilişim sistemine girme ihtimali (Örn: TCK 243)",
-        "hack": "Bilişim sistemine girme veya sistemi bozma ihtimali (Örn: TCK 243, 244)",
-        "küfür": "Hakaret suçu ihtimali (Örn: TCK 125)",
-        "hakaret": "Hakaret suçu ihtimali (Örn: TCK 125)"
-    }
-    
-    ek_talimat = ""
-    bulunan_maddeler = []
-    girdi_kucuk = user_input.lower()
-    
-    for anahtar_kelime, madde in kurallar.items():
-        if anahtar_kelime in girdi_kucuk:
-            bulunan_maddeler.append(madde)
-            
-    if bulunan_maddeler:
-        ek_talimat = "\n\n[HUKUKİ SİNYAL BİLGİSİ]: Bu vakada şu potansiyel hukuki risk alanları gündeme gelebilir: " + ", ".join(bulunan_maddeler) + ". "
-        ek_talimat += "Lütfen bu durumları kesin bir suç isnadı olarak kabul etme. Kendi hukuki reasoning süzgecinden geçirerek, 'değerlendirilebilir', 'gündeme gelebilir' gibi ihtiyatlı bir dille analiz et."
-            
-    return ek_talimat
+# Güçlendirilmiş sistem promptu — tekrar engeli + doğru madde eşleme kuralları
+HUKUKCU_TALIMATI = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
+Görevin kullanıcıya olası hukuki durumlar ve pratik adımlar hakkında rehberlik sunmaktır.
 
-def call_llm(prompt, sys_msg, temp=0.1):
-    hukukçu_talimati = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın. 
-    Görevin kullanıcıya olası hukuki durumlar og pratik adımlar hakkında rehberlik sunmaktır. Şunlar senin KIRMIZI ÇİZGİLERİNDİR:
-    1. Kullanıcıyı asla yargılamayacaksın, ahlaki ders vermeyeceksin ve kurbanı suçlayıcı cümleler kurmayacaksın.
-    2. Kesinlikle "şu suç oluşmuştur", "ceza alır" gibi kesin hüküm bildiren ifadeler KULLANMAYACAKSIN. Bunun yerine daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde", "olayın detayına göre" gibi ihtiyatlı hukuk dili kullanacaksın.
-    3. Olayın bağlamına göre TCK 106, 107, 125, 123, 134, 135, 136, 157, 158, 243, 244 og KVKK gibi ilgili tüm maddeleri özgürce değerlendirebilirsin.
-    4. Analizlerini tarafsız, empatik ve siber hukuka uygun yapacaksın."""
-    
-    messages = [
-        {"role": "system", "content": hukukçu_talimati}, 
-        {"role": "user", "content": prompt}
-    ]
+KIRMIZI ÇİZGİLERİN:
+1. Kullanıcıyı asla yargılama, ahlaki ders verme veya kurbanı suçlayıcı cümleler kurma.
+2. "Şu suç oluşmuştur" veya "ceza alır" gibi kesin hüküm bildiren ifadeler KULLANMA. Daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde", "olayın detayına göre" gibi ihtiyatlı hukuk dili kullan.
+3. TEKRAR YASAĞI: Hiçbir cümleyi, maddeyi veya pratik adımı iki kez yazma. Her bilgi yalnızca bir kez geçecek.
+4. MADDE SEÇME KURALLARI (bunlara kesinlikle uy):
+   - Para veya çıkar karşılığı tehdit varsa → TCK 107 (Şantaj) MUTLAKA değerlendir.
+   - İşyerinde patron/şirket tarafından yazışma izleme varsa → TCK 132 (Haberleşme Gizliliği) ve KVKK Madde 12 önceliklidir; TCK 243/244 dışarıdan sisteme giriş içindir, işyeri izlemesine uygulanmaz.
+   - Özel görüntü veya fotoğraf ifşası varsa → TCK 134 ve TCK 226 birlikte değerlendir.
+   - Sosyal medya/e-posta hesabı ele geçirilmişse → TCK 243.
+   - Telefon veya mesajla banka/kimlik bilgisi alınmışsa → TCK 158/2-f (Nitelikli Dolandırıcılık) önceliklidir.
+5. KVKK yalnızca kurumsal veri sorumlusu, sistem zafiyeti veya şirket düzeyinde veri ihlali varsa uygula. Bireyler arası vakada "Bu vakada KVKK kapsamında kurumsal veri ihlali unsuru tespit edilmemiştir" yaz.
+6. Cevabını KESİNLİKLE şu beş başlıkla yapılandır, başka başlık ekleme:
+
+OLAYIN HUKUKİ NİTELİĞİ
+OLASI SUÇ VE İHLALLER
+HUKUKİ DEĞERLENDİRME
+PRATİK OLARAK YAPILABİLECEKLER
+RESMİ BAŞVURU YOLLARI"""
+
+def hukuki_filtre(user_input):
+    """Anahtar kelimelerden modele ek sinyal üretir."""
+    kurallar = {
+        "şantaj":        "TCK 107 (Şantaj) — para veya yarar karşılığı tehdit unsuru",
+        "para istedi":   "TCK 107 (Şantaj) — para veya yarar karşılığı tehdit unsuru",
+        "para istiyor":  "TCK 107 (Şantaj) — para veya yarar karşılığı tehdit unsuru",
+        "tehdit":        "TCK 106 (Tehdit) ihtimali",
+        "yayacağım":     "TCK 107 (Şantaj) + TCK 134 (Özel Hayat Gizliliği) ihtimali",
+        "yayacak":       "TCK 107 (Şantaj) + TCK 134 (Özel Hayat Gizliliği) ihtimali",
+        "fotoğraf":      "TCK 134 (Özel Hayat) + TCK 226 (Müstehcenlik) değerlendirilebilir",
+        "görüntü":       "TCK 134 (Özel Hayat) + TCK 226 (Müstehcenlik) değerlendirilebilir",
+        "izliyor":       "TCK 132 (Haberleşme Gizliliği) — işyeri bağlamında KVKK Madde 12",
+        "takip ediyor":  "TCK 132 (Haberleşme Gizliliği) ihtimali",
+        "yazılım kurdu": "TCK 132 (Haberleşme Gizliliği) + KVKK Madde 12 ihtimali",
+        "hack":          "TCK 243 (Bilişim Sistemine Girme) ihtimali",
+        "hacklendi":     "TCK 243 (Bilişim Sistemine Girme) ihtimali",
+        "sızdırıldı":    "TCK 136 (Verileri Yayma) ihtimali",
+        "ifşa":          "TCK 134 (Özel Hayat Gizliliği) ihtimali",
+        "hakaret":       "TCK 125 (Hakaret) ihtimali",
+        "küfür":         "TCK 125 (Hakaret) ihtimali",
+    }
+    bulunanlar = []
+    girdi_kucuk = user_input.lower()
+    for anahtar, sinyal in kurallar.items():
+        if anahtar in girdi_kucuk and sinyal not in bulunanlar:
+            bulunanlar.append(sinyal)
+
+    if bulunanlar:
+        return (
+            "\n\n[HUKUKİ SİNYAL]: Bu vakada şu potansiyel risk alanları ön plana çıkmaktadır: "
+            + ", ".join(bulunanlar)
+            + ". Bu sinyalleri kesin suç isnadı olarak değil, değerlendirme çerçevesi olarak kullan."
+        )
+    return ""
+
+def call_llm(prompt, sys_msg, temp=0.1, gecmis=None):
+    """LLM çağrısı — isteğe bağlı konuşma geçmişi desteği ile."""
+    messages = [{"role": "system", "content": sys_msg}]
+    if gecmis:
+        # Son 6 mesajı bağlam olarak ekle (token limitini aşmamak için)
+        for msg in gecmis[-6:]:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": prompt})
     res = client.chat_completion(messages=messages, max_tokens=1500, temperature=temp)
     return res.choices[0].message.content
 
-def run_pipeline(user_query):
-    # ─── SOHBET VE SELAMLAMA KONTROLÜ ───
-    temiz_girdi = user_query.strip().lower()
-    selamlar = ["merhaba", "selam", "mrb", "slm", "hello", "hi", "iyi günler", "iyi akşamlar", "hey", "nasılsın", "kimsin"]
-    
-    if temiz_girdi in selamlar or len(user_query.strip()) < 4:
-        return "Merhaba! Ben Siber Hukuk Analiz Asistanı. Yaşadığınız siber mağduriyetleri, şüpheli internet olaylarını veya dijital platformlardaki hukuki sorunlarınızı buraya yazarak analiz raporu oluşturabilirsiniz. Size nasıl yardımcı olabilirim?"
+def run_pipeline(user_query, gecmis=None):
+    # ─── SELAMLAMA KONTROLÜ ───
+    temiz = user_query.strip().lower()
+    selamlar = ["merhaba", "selam", "mrb", "slm", "hello", "hi", "iyi günler",
+                "iyi akşamlar", "hey", "nasılsın", "kimsin"]
+    if temiz in selamlar or len(user_query.strip()) < 4:
+        return ("Merhaba! Ben Siber Hukuk Analiz Asistanı. Yaşadığınız siber mağduriyetleri, "
+                "şüpheli internet olaylarını veya dijital platformlardaki hukuki sorunlarınızı "
+                "buraya yazarak analiz raporu oluşturabilirsiniz. Size nasıl yardımcı olabilirim?")
 
     with st.status("⚖️ Hukuk Motoru Analiz Yapıyor...", expanded=True) as status:
-        # Sınıflandırma
-        st.write("🔍 Aşama 1: Vaka Sınıflandırılıyor...")
-        class_prompt = f"""Aşağıdaki hukuki senaryoyu analiz et og İLGİLİ TÜM etiketleri JSON formatında döndür. Birden fazla etiket seçebilirsin. Senaryo: {user_query} Etiket Seçenekleri: [hesap_ele_gecirme, dolandiricilik, oltalama, kimlik_taklidi, taciz, ozel_goruntu_ifsasi, sosyal_medya_erisim, veri_ihlali, tehdit, santaj, hakaret, platform_sorumlulugu, yetkisiz_erisim, sistem_bozma, veri_calma, mail_okuma, veri_guvenligi, mesru_menfaat, acik_riza] Format: {{"etiketler": []}}"""
-        raw_json = call_llm(class_prompt, "Sadece JSON döndür.", temp=0.01)
-        
-        try:
-            secilenler = json.loads(re.search(r'\{.*\}', raw_json, re.DOTALL).group(0)).get("etiketler", [])
-        except: secilenler = []
 
-        # Mapping & RAG
+        # AŞAMA 1 — Sınıflandırma
+        st.write("🔍 Aşama 1: Vaka Sınıflandırılıyor...")
+        etiketler_str = ", ".join(HUKUK_DB.keys())
+        class_prompt = (
+            f"Aşağıdaki hukuki senaryoyu analiz et ve İLGİLİ TÜM etiketleri JSON olarak döndür. "
+            f"Birden fazla etiket seçebilirsin.\n\nSenaryo: {user_query}\n\n"
+            f"Etiket Seçenekleri: [{etiketler_str}]\n\nFormat: {{\"etiketler\": []}}"
+        )
+        raw_json = call_llm(class_prompt, "Sadece JSON döndür, başka hiçbir şey yazma.", temp=0.01)
+
+        try:
+            secilenler = json.loads(
+                re.search(r'\{.*\}', raw_json, re.DOTALL).group(0)
+            ).get("etiketler", [])
+        except:
+            secilenler = []
+
+        # AŞAMA 2 — Mevzuat eşleme
         st.write("⚙️ Aşama 2: Mevzuat Verileri Çekiliyor...")
         maddeler = [HUKUK_DB[e]["madde"] for e in secilenler if e in HUKUK_DB]
+
+        # Tekrar eden maddeleri temizle, KVKK çakışmasını gider
+        maddeler = list(dict.fromkeys(maddeler))
         if any("TCK" in m for m in maddeler) and "KVKK Madde 5/2-f" in maddeler:
             maddeler.remove("KVKK Madde 5/2-f")
-        
+
         mevzuat_metni = retrieve_mevzuat(maddeler)
 
-        # Final Yazım
+        # AŞAMA 3 — Rapor üretimi
         st.write("✍️ Aşama 3: Rapor Oluşturuluyor...")
-        gen_sys = """Sen uzman, ihtiyatlı ve kapsayıcı bir siber hukuk danışmanısın. Cevabında ceza hukuku boyutunu (bireysel suçlar) ve idare hukuku boyutunu (kurumların veya veri sorumlularının yükümlülüklerini) kesin çizgilerle birbirinden ayırmalısın. Şablonda yazan parantez içi açıklamalara göre değil, sadece kullanıcının anlattığı somut vakaya göre analiz üretmelisin."""
-        
-        gen_prompt = f"""Olay: {user_query} 
-        Öncelikli İlgili Maddeler: {maddeler} 
-        Mevzuat Metinleri: {mevzuat_metni} 
-        
-        Lütfen cevabını KESİNLİKLE aşağıdaki şablona ve başlıklara göre yapılandır. Şablondaki parantez içi örnek talimatları metnine dahil etme, onları sadece rehber kabul et:
-        
-        OLAYIN HUKUKİ NİTELİĞİ
-        (Vakanın siber veya genel hukuk alanındaki gerçek tanımı)
-        
-        OLASI SUÇ VE İHLALLER
-        - Ceza Hukuku (TCK): (Failin somut vakadaki eylemine uyan TCK maddelerini ihtiyatlı dille açıkla. Eğer olay siber suç değilse zorla siber maddeler dayatma, dolandırıcılık veya tehdit ise ona odaklan.)
-        - İdare Hukuku (KVKK): (Eğer olayda kurumsal bir veri sorumlusu, sistem zafiyeti veya veri ihlali yoksa 'İdare hukuku kapsamında kurumsal bir veri ihlali unsuru tespit edilmemiştir' notu düş.)
-        
-        HUKUKİ DEĞERLENDİRME
-        (Kullanıcının anlattığı somut fail davranışlarını temel alarak olayı analiz et. Örnek şablon cümlelerini buraya kopyalama.)
-        
-        PRATİK OLARAK YAPILABİLECEKLER
-        (Mağdurun yaşadığı somut olaya tam uyan, uygulanabilir adımlar yaz. Telefon dolandırıcılığı ise kapatıp emniyet birimlerini aramasını; hesap çalınması ise 2FA ve şifre işlemlerini öner. Alakasız durumlarda uzaktan oturum kapatma gibi ezbere siber güvenlik maddeleri yazma.)
-        
-        RESMİ BAŞVURU YOLLARI
-        (En uygun yasal başvuru mekanizmalarını belirt. Cumhuriyet Başsavcılıkları, emniyet birimleri veya ilgili idari kurulları somut vakaya göre eşleştir.)"""
-        
-        final = call_llm(gen_prompt, gen_sys, temp=0.3)
-        status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
+
+        gen_prompt = f"""Olay: {user_query}
+Öncelikli İlgili Maddeler: {maddeler}
+Mevzuat Metinleri:
+{mevzuat_metni}
+
+Lütfen cevabını KESİNLİKLE şu beş başlıkla yapılandır:
+
+OLAYIN HUKUKİ NİTELİĞİ
+(Vakanın siber veya genel hukuk alanındaki kısa ve net tanımı)
+
+OLASI SUÇ VE İHLALLER
+- Ceza Hukuku (TCK): (Failin somut vakadaki eylemine uyan TCK maddelerini ihtiyatlı dille açıkla)
+- İdare Hukuku (KVKK): (Kurumsal veri sorumlusu yoksa "Bu vakada KVKK kapsamında kurumsal veri ihlali unsuru tespit edilmemiştir" yaz)
+
+HUKUKİ DEĞERLENDİRME
+(Kullanıcının anlattığı somut olayı özgün şekilde analiz et — şablon cümle kopyalama, hiçbir bilgiyi tekrarlama)
+
+PRATİK OLARAK YAPILABİLECEKLER
+(Bu vakaya özgü, birbirinden farklı 4-5 somut adım. Hiçbir adımı tekrarlama.)
+
+RESMİ BAŞVURU YOLLARI
+(Bu vakaya en uygun 2-3 başvuru mekanizması — kısa ve net)"""
+
+        final = call_llm(gen_prompt, HUKUKCU_TALIMATI, temp=0.2, gecmis=gecmis)
+        status.update(label="✅ Analiz Tamamlandı!", state="complete", expanded=False)
+
     return final
 
 # ─────────────────────────────────────────
 # 5. SIDEBAR VE ANA EKRAN
 # ─────────────────────────────────────────
 db = load_db()
-if "chat_id" not in st.session_state: st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-if "messages" not in st.session_state: st.session_state.messages = []
+if "chat_id" not in st.session_state:
+    st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 with st.sidebar:
     st.markdown("### ⚖️ Siber Hukuk Analiz")
@@ -221,8 +289,7 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
     st.markdown("---")
-    
-    # Geçmiş analizleri listeleme
+
     for cid in sorted(db.keys(), reverse=True):
         if cid in db and db[cid]:
             first_user_msg = next((m["content"] for m in db[cid] if m["role"] == "user"), "")
@@ -233,7 +300,7 @@ with st.sidebar:
                 display_title = f"💬 Analiz {cid[:10]}"
         else:
             display_title = f"💬 Analiz {cid[:10]}"
-            
+
         if st.button(display_title, key=cid, use_container_width=True):
             st.session_state.chat_id = cid
             st.session_state.messages = db[cid]
@@ -242,20 +309,22 @@ with st.sidebar:
 st.title("Siber Hukuk Analiz Portalı")
 
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="👤" if msg["role"]=="user" else "⚖️"):
+    with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "⚖️"):
         st.markdown(msg["content"])
 
 if prompt := st.chat_input("Hukuki senaryoyu buraya yazın..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="👤"): 
+    with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
-    
+
     with st.chat_message("assistant", avatar="⚖️"):
         ek_bilgi = hukuki_filtre(prompt)
-        answer = run_pipeline(prompt + ek_bilgi)
-        
+        # Konuşma geçmişini pipeline'a aktar (son mesaj hariç)
+        gecmis = st.session_state.messages[:-1] if len(st.session_state.messages) > 1 else None
+        answer = run_pipeline(prompt + ek_bilgi, gecmis=gecmis)
+
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
-        
+
         db[st.session_state.chat_id] = st.session_state.messages
         save_db(db)
