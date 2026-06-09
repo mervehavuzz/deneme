@@ -102,13 +102,13 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 # ─────────────────────────────────────────
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-   model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash",
-    generation_config={
-        "temperature": 0.2,
-        "max_output_tokens": 1500
-    }
-)
+    model = genai.GenerativeModel(
+        model_name="gemini-2.5-flash",
+        generation_config={
+            "temperature": 0.2,
+            "max_output_tokens": 1500
+        }
+    )
 except Exception as e:
     st.error(f"Gemini API Hatası: {e}")
     st.stop()
