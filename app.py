@@ -192,4 +192,29 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 }
 </style>
 """, unsafe_allow_html=True)
+db = load_db()
+
+if "chat_id" not in st.session_state:
+    st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+st.title("Siber Hukuk Analiz Sistemi")
+
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+if prompt := st.chat_input("Senaryoyu yaz"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    with st.chat_message("assistant"):
+        answer = run_pipeline(prompt)
+        st.markdown(answer)
+
+    st.session_state.messages.append({"role": "assistant", "content": answer})
+
+    db[st.session_state.chat_id] = st.session_state.messages
+    save_db(db)
 
