@@ -103,7 +103,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel(
-        model="gemini-1.5-flash-001",
+        model_name="gemini-1.5-flash-001",
         generation_config={"temperature": 0.2, "max_output_tokens": 1500}
     )
 except Exception as e:
