@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import json
-import os
 import re
 from datetime import datetime
 
@@ -100,18 +99,29 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 # ─────────────────────────────────────────
 # 4. GEMİNİ API VE MANTIK MOTORU
 # ─────────────────────────────────────────
+
+# Hız ve token ayarları
+OUTPUT_TOKENS = 4000  # Raporun yarıda kesilmemesi için artırıldı
+
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel(
         model_name="gemini-2.5-flash",
-        generation_config={
-            "temperature": 0.2,
-            "max_output_tokens": 1500
-        }
+        generation_config=genai.GenerationConfig(
+            temperature=0.2,
+            max_output_tokens=OUTPUT_TOKENS,
+        )
     )
 except Exception as e:
     st.error(f"Gemini API Hatası: {e}")
     st.stop()
+
+# Thinking modunu kapatan config — her API çağrısında kullanılır
+HIZLI_CONFIG = genai.GenerationConfig(
+    temperature=0.2,
+    max_output_tokens=OUTPUT_TOKENS,
+    thinking_config={"thinking_budget": 0},  # Thinking kapalı → hız artar
+)
 
 SISTEM_PROMPTU = """Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
 
@@ -134,6 +144,7 @@ OLASI SUÇ VE İHLALLER
 HUKUKİ DEĞERLENDİRME
 PRATİK OLARAK YAPILABİLECEKLER
 RESMİ BAŞVURU YOLLARI"""
+
 
 def hukuki_filtre(user_input):
     kurallar = {
@@ -167,23 +178,34 @@ def hukuki_filtre(user_input):
         )
     return ""
 
+
 def call_llm(prompt, gecmis=None):
-    """Gemini API çağrısı — konuşma geçmişi desteği ile."""
+    """
+    Gemini API çağrısı.
+    - thinking_budget=0 ile düşünme modu kapalı → daha hızlı yanıt
+    - max_output_tokens=4000 → raporun tamamı kesilmeden gelir
+    """
     try:
-        chat = model.start_chat(history=[])
-        # Sistem promptunu ilk mesaj olarak ekle
         tam_prompt = SISTEM_PROMPTU + "\n\n" + prompt
+
         if gecmis:
-            # Geçmiş mesajları Gemini formatına çevir
             history = []
             for msg in gecmis[-6:]:
                 role = "user" if msg["role"] == "user" else "model"
                 history.append({"role": role, "parts": [msg["content"]]})
             chat = model.start_chat(history=history)
-        response = chat.send_message(tam_prompt)
+        else:
+            chat = model.start_chat(history=[])
+
+        response = chat.send_message(
+            tam_prompt,
+            generation_config=HIZLI_CONFIG,
+        )
         return response.text
+
     except Exception as e:
         return f"Analiz sırasında hata oluştu: {str(e)}"
+
 
 def run_pipeline(user_query, gecmis=None):
     # Selamlama kontrolü
@@ -191,9 +213,11 @@ def run_pipeline(user_query, gecmis=None):
     selamlar = ["merhaba", "selam", "mrb", "slm", "hello", "hi",
                 "iyi günler", "iyi akşamlar", "hey", "nasılsın", "kimsin"]
     if temiz in selamlar or len(user_query.strip()) < 4:
-        return ("Merhaba! Ben Siber Hukuk Analiz Asistanıyım. Yaşadığınız siber mağduriyeti, "
-                "şüpheli internet olayını veya dijital platformdaki hukuki sorununuzu anlatın; "
-                "TCK, KVKK ve ilgili mevzuat kapsamında analiz ederek pratik adımları sunayım.")
+        return (
+            "Merhaba! Ben Siber Hukuk Analiz Asistanıyım. Yaşadığınız siber mağduriyeti, "
+            "şüpheli internet olayını veya dijital platformdaki hukuki sorununuzu anlatın; "
+            "TCK, KVKK ve ilgili mevzuat kapsamında analiz ederek pratik adımları sunayım."
+        )
 
     with st.status("⚖️ Hukuk Motoru Analiz Yapıyor...", expanded=True) as status:
 
@@ -205,14 +229,14 @@ def run_pipeline(user_query, gecmis=None):
             f"Yalnızca JSON döndür, başka hiçbir şey yazma.\n\n"
             f"Senaryo: {user_query}\n\n"
             f"Etiket Seçenekleri: [{etiketler_str}]\n\n"
-            f"Format: {{\"etiketler\": []}}"
+            f'Format: {{"etiketler": []}}'
         )
         raw_json = call_llm(class_prompt)
         try:
             secilenler = json.loads(
                 re.search(r'\{.*\}', raw_json, re.DOTALL).group(0)
             ).get("etiketler", [])
-        except:
+        except Exception:
             secilenler = []
 
         # AŞAMA 2 — Mevzuat eşleme
@@ -224,7 +248,7 @@ def run_pipeline(user_query, gecmis=None):
             maddeler.remove("KVKK Madde 5/2-f")
         mevzuat_metni = retrieve_mevzuat(maddeler)
 
-        # AŞAMA 3 — Rapor
+        # AŞAMA 3 — Rapor oluşturma
         st.write("✍️ Aşama 3: Hukuki Rapor Oluşturuluyor...")
         gen_prompt = f"""Olay: {user_query}
 Öncelikli İlgili Maddeler: {maddeler}
@@ -254,10 +278,12 @@ RESMİ BAŞVURU YOLLARI
 
     return final
 
+
 # ─────────────────────────────────────────
 # 5. SIDEBAR VE ANA EKRAN
 # ─────────────────────────────────────────
 db = load_db()
+
 if "chat_id" not in st.session_state:
     st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 if "messages" not in st.session_state:
@@ -274,7 +300,9 @@ with st.sidebar:
 
     for cid in sorted(db.keys(), reverse=True):
         if cid in db and db[cid]:
-            first_user_msg = next((m["content"] for m in db[cid] if m["role"] == "user"), "")
+            first_user_msg = next(
+                (m["content"] for m in db[cid] if m["role"] == "user"), ""
+            )
             if first_user_msg:
                 words = first_user_msg.split()
                 display_title = " ".join(words[:4]) + ("..." if len(words) > 4 else "")
@@ -288,6 +316,7 @@ with st.sidebar:
             st.session_state.messages = db[cid]
             st.rerun()
 
+# ─── Ana Ekran ───
 st.title("Siber Hukuk Analiz Portalı")
 
 for msg in st.session_state.messages:
