@@ -159,28 +159,37 @@ Analiz yap.
 # ─────────────────────────────
 # 6. STREAMLIT UI
 # ─────────────────────────────
-db = load_db()
+st.set_page_config(page_title="Siber Hukuk Analiz Sistemi", page_icon="⚖️", layout="wide")
 
-if "chat_id" not in st.session_state:
-    st.session_state.chat_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
+.stApp { background: #F8F7FF !important; }
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+/* Sidebar Genel Arka Planı */
+[data-testid="stSidebar"] {
+    background: linear-gradient(160deg, #5B2FD9 0%, #7C3FFC 40%, #6A2EE8 100%) !important;
+}
 
-st.title("Siber Hukuk Analiz Sistemi")
+/* Sidebar İçindeki Normal Başlık ve Düz Metinlerin Beyaz Kalması */
+[data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] div { 
+    color: white !important; 
+}
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+/* Sidebar İçindeki Butonların Yazı Fontunun Siyah Yapılması */
+[data-testid="stSidebar"] button p {
+    color: #1A1A1A !important;
+    font-weight: 500 !important;
+}
 
-if prompt := st.chat_input("Senaryoyu yaz"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+/* Mesaj Balonları */
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+    background: #7C5CFC !important; border-radius: 15px 15px 5px 15px !important;
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
+    background: white !important; border: 1px solid #E4E0FF !important; border-radius: 5px 15px 15px 15px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
-    with st.chat_message("assistant"):
-        answer = run_pipeline(prompt)
-        st.markdown(answer)
-
-    st.session_state.messages.append({"role": "assistant", "content": answer})
-
-    db[st.session_state.chat_id] = st.session_state.messages
-    save_db(db)
