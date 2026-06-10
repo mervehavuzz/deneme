@@ -1,7 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
 import re
+import time
 from datetime import datetime
+from google.api_core.exceptions import ResourceExhausted, GoogleAPIError
 
 # ─────────────────────────────────────────
 # 1. SEANS YÖNETİMİ
@@ -32,7 +34,6 @@ MEVZUAT = {
 # ─────────────────────────────────────────
 # 3. KEYWORD BAZLI MADDE TESPİTİ
 # ─────────────────────────────────────────
-# Her kural: (tetikleyici kelimeler, madde numaraları, kvkk_gerekli mi?)
 KURALLAR = [
     (["şantaj", "para istiyor", "para istedi", "ödeme iste", "para ver", "para gönder"],
      ["107", "106"], False),
@@ -48,7 +49,7 @@ KURALLAR = [
      ["158", "243"], False),
     (["patronum", "işyerinde", "şirket bilgisayarı", "yazışmalarımı takip",
       "izliyor", "gözetliyor", "yazılım kurdu", "ekranımı"],
-     ["132"], True),   # True → KVKK Madde 12 de uygulanır
+     ["132"], True),
     (["hakaret", "küfür", "aşağıladı", "rezil etti", "onurumu"],
      ["125"], False),
     (["tehdit", "zarar vereceğim", "saldıracağım", "öldüreceğim"],
@@ -63,7 +64,6 @@ def madde_tespit(user_input):
     girdi = user_input.lower()
     bulunan_nums = []
     kvkk_var = False
-
     for keywords, maddeler, kvkk in KURALLAR:
         if any(k in girdi for k in keywords):
             for m in maddeler:
@@ -71,16 +71,14 @@ def madde_tespit(user_input):
                     bulunan_nums.append(m)
             if kvkk:
                 kvkk_var = True
-
     mevzuat_metni = "\n".join([MEVZUAT[n] for n in bulunan_nums if n in MEVZUAT])
     madde_listesi = []
     for n in bulunan_nums:
-        etiket = f"TCK {n}" if n != "158" else "TCK 158/2-f"
+        etiket = "TCK 158/2-f" if n == "158" else f"TCK {n}"
         if etiket not in madde_listesi:
             madde_listesi.append(etiket)
     if kvkk_var:
         madde_listesi.append("KVKK Madde 12")
-
     return madde_listesi, mevzuat_metni, kvkk_var
 
 # ─────────────────────────────────────────
@@ -98,29 +96,24 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 [data-testid="stSidebar"] h3,
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] div { color: white !important; }
-[data-testid="stSidebar"] button p {
-    color: #1A1A1A !important;
-    font-weight: 500 !important;
-}
+[data-testid="stSidebar"] button p { color: #1A1A1A !important; font-weight: 500 !important; }
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
-    background: #7C5CFC !important;
-    border-radius: 15px 15px 5px 15px !important;
+    background: #7C5CFC !important; border-radius: 15px 15px 5px 15px !important;
 }
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
-    background: white !important;
-    border: 1px solid #E4E0FF !important;
+    background: white !important; border: 1px solid #E4E0FF !important;
     border-radius: 5px 15px 15px 15px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
-# 5. GEMİNİ API KURULUMU (GÜNCELLENDİ)
+# 5. GEMİNİ API KURULUMU
 # ─────────────────────────────────────────
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     gemini_model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash", # Kararlı ana sürüme çekildi
+        model_name="gemini-2.5-flash",
         system_instruction="""Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
 
 KIRMIZI ÇİZGİLERİN:
@@ -128,7 +121,7 @@ KIRMIZI ÇİZGİLERİN:
 2. "Şu suç oluşmuştur" veya "ceza alır" gibi kesin hüküm ifadeleri KULLANMA. Daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde" gibi ihtiyatlı dil kullan.
 3. TEKRAR YASAĞI: Hiçbir cümleyi, maddeyi veya adımı iki kez yazma.
 4. Sana verilen maddeler dışında madde ekleme.
-5. Her zaman yalnızca şu ve sadece şu beş başlığı kullan:
+5. Her zaman yalnızca şu beş başlığı kullan:
 
 OLAYIN HUKUKİ NİTELİĞİ
 OLASI SUÇ VE İHLALLER
@@ -141,51 +134,41 @@ except Exception as e:
     st.stop()
 
 # ─────────────────────────────────────────
-# 6. LLM ÇAĞRISI (Zırhlandırılmış & Otomatik Beklemeli)
+# 6. LLM ÇAĞRISI
 # ─────────────────────────────────────────
 def call_llm(prompt, gecmis=None):
-    import time
-    from google.api_core.exceptions import ResourceExhausted, GoogleAPIError
-
-    bekleme_suresi = 5  # 429 hatası alınırsa beklenecek ilk saniye süresi
-    
-    for deneme in range(4):  # Kota dolarsa en fazla 4 kez arka arkaya denesin
+    bekleme = 5
+    for deneme in range(4):
         try:
             history = []
             if gecmis:
                 for msg in gecmis[-4:]:
                     role = "user" if msg["role"] == "user" else "model"
                     history.append({"role": role, "parts": [msg["content"]]})
-            
             chat = gemini_model.start_chat(history=history)
             response = chat.send_message(
                 prompt,
                 generation_config=genai.GenerationConfig(
                     temperature=0.2,
-                    max_output_tokens=1500,
+                    max_output_tokens=8192,  # ← Yarıda kesilme sorunu çözüldü
                 )
             )
             return response.text
-            
         except ResourceExhausted:
-            # 429 Hata yakalama: Limit aşıldığında burası tetiklenir
             if deneme < 3:
-                # Kullanıcı arayüzünde tatlı bir uyarı gösterelim ki dondu sanmasınlar
-                st.warning(f"⏳ Yoğunluk nedeniyle kota sınırı aşıldı. {bekleme_suresi} saniye içinde otomatik tekrar denenecek...")
-                time.sleep(bekleme_suresi)
-                bekleme_suresi *= 2  # Süreyi katlayarak artır (5, 10, 20 saniye...)
+                st.warning(f"⏳ Kota sınırı aşıldı. {bekleme} saniye içinde tekrar denenecek...")
+                time.sleep(bekleme)
+                bekleme *= 2
             else:
-                return "⚠️ Şu an Google API sunucuları çok yoğun ve ücretsiz kota sınırınız tamamen doldu. Lütfen 1 dakika sonra tekrar deneyin."
-                
+                return "⚠️ Google API kotası doldu. Lütfen 1 dakika sonra tekrar deneyin."
         except GoogleAPIError as e:
-            return f"Genel bir API hatası oluştu: {str(e)}"
+            return f"API hatası: {str(e)}"
         except Exception as e:
-            return f"Beklenmeyen bir hata meydana geldi: {str(e)}"
-            
+            return f"Beklenmeyen hata: {str(e)}"
     return "Analiz tamamlanamadı."
 
 # ─────────────────────────────────────────
-# 7. ANA PIPELINE (tek LLM çağrısı)
+# 7. ANA PIPELINE
 # ─────────────────────────────────────────
 SELAMLAR = {"merhaba", "selam", "mrb", "slm", "hello", "hi",
             "iyi günler", "iyi akşamlar", "hey", "nasılsın", "kimsin"}
@@ -197,12 +180,9 @@ def run_pipeline(user_query, gecmis=None):
                 "veya dijital hukuk sorununuzu anlatın; TCK ve KVKK kapsamında analiz edeyim.")
 
     with st.status("⚖️ Analiz Yapılıyor...", expanded=True) as status:
-
-        # Madde tespiti — kod içinde, LLM çağrısı yok
         st.write("⚙️ İlgili mevzuat tespit ediliyor...")
         maddeler, mevzuat_metni, kvkk_var = madde_tespit(user_query)
 
-        # KVKK paragrafını vakaya göre ayarla
         kvkk_paragraf = (
             "- İdare Hukuku (KVKK): Patron/işveren veri sorumlusu sıfatıyla "
             "KVKK Madde 12 kapsamında yükümlüdür. Çalışanın yazışmalarının "
@@ -212,7 +192,6 @@ def run_pipeline(user_query, gecmis=None):
             "veri ihlali unsuru tespit edilmemiştir."
         )
 
-        # Tek LLM çağrısı
         st.write("✍️ Hukuki rapor oluşturuluyor...")
         prompt = f"""Olay: {user_query}
 
