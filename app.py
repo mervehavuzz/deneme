@@ -108,18 +108,13 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
-# 5. GEMİNİ API KURULUMU (GÜNCELLENDİ)
+# 5. GEMİNİ API KURULUMU
 # ─────────────────────────────────────────
 try:
-    # YENİ TEMİZ API ANAHTARINI BURAYA YAPIŞTIR (Secrets yerine doğrudan koddan okuyacak)
-   genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
- 
-    
-    
-    genai.configure(api_key=YENI_API_KEY)
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     gemini_model = genai.GenerativeModel(
         model_name="gemini-2.5-flash",
-        system_instruction="Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
+        system_instruction="""Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
 
 KIRMIZI ÇİZGİLERİN:
 1. Kullanıcıyı asla yargılama, kurbanı suçlayıcı cümleler kurma.
@@ -132,9 +127,8 @@ OLAYIN HUKUKİ NİTELİĞİ
 OLASI SUÇ VE İHLALLER
 HUKUKİ DEĞERLENDİRME
 PRATİK OLARAK YAPILABİLECEKLER
-RESMİ BAŞVURU YOLLARI"
-
-
+RESMİ BAŞVURU YOLLARI"""
+    )
 except Exception as e:
     st.error(f"Gemini API Hatası: {e}")
     st.stop()
@@ -143,7 +137,8 @@ except Exception as e:
 # 6. LLM ÇAĞRISI
 # ─────────────────────────────────────────
 def call_llm(prompt, gecmis=None):
-    bekleme = 5
+    bekleme = 15
+    uyari_alani = st.empty()
     for deneme in range(4):
         try:
             history = []
@@ -156,21 +151,26 @@ def call_llm(prompt, gecmis=None):
                 prompt,
                 generation_config=genai.GenerationConfig(
                     temperature=0.2,
-                    max_output_tokens=8192,  # ← Yarıda kesilme sorunu çözüldü
+                    max_output_tokens=1500,
                 )
             )
+            uyari_alani.empty()
             return response.text
         except ResourceExhausted:
             if deneme < 3:
-                st.warning(f"⏳ Kota sınırı aşıldı. {bekleme} saniye içinde tekrar denenecek...")
+                uyari_alani.warning(f"⏳ Yoğunluk nedeniyle kota sınırı aşıldı. Arka planda {bekleme} saniye bekleniyor...")
                 time.sleep(bekleme)
-                bekleme *= 2
+                bekleme += 15
             else:
-                return "⚠️ Google API kotası doldu. Lütfen 1 dakika sonra tekrar deneyin."
+                uyari_alani.empty()
+                return "⚠️ Günlük veya dakikalık ücretsiz API kullanım sınırınız doldu. Lütfen bir süre sonra tekrar deneyin."
         except GoogleAPIError as e:
+            uyari_alani.empty()
             return f"API hatası: {str(e)}"
         except Exception as e:
+            uyari_alani.empty()
             return f"Beklenmeyen hata: {str(e)}"
+    uyari_alani.empty()
     return "Analiz tamamlanamadı."
 
 # ─────────────────────────────────────────
@@ -260,7 +260,7 @@ with st.sidebar:
             st.session_state.messages = db[cid]
             st.rerun()
 
-st.title("Siber Hukuk Analiz Portalı")
+st.title("Siber Hukuk Analiz Portal")
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "⚖️"):
