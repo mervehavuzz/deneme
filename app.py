@@ -112,15 +112,29 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
 # ─────────────────────────────────────────
 try:
     # YENİ TEMİZ API ANAHTARINI BURAYA YAPIŞTIR (Secrets yerine doğrudan koddan okuyacak)
-    YENI_API_KEY = "AIzaSyD0ReXAruklePU10Nhu3lUDkwSuYRt2DAc"
+   genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+ 
     
     
     genai.configure(api_key=YENI_API_KEY)
     gemini_model = genai.GenerativeModel(
         model_name="gemini-2.5-flash",
-        system_instruction="""Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
-        ... (Sistem promptunun geri kalanı aynen kalacak) ..."""
-    )
+        system_instruction="Sen Türkiye Cumhuriyeti yasalarına hakim, ihtiyatlı ve profesyonel bir Siber Hukuk Asistanısın.
+
+KIRMIZI ÇİZGİLERİN:
+1. Kullanıcıyı asla yargılama, kurbanı suçlayıcı cümleler kurma.
+2. "Şu suç oluşmuştur" veya "ceza alır" gibi kesin hüküm ifadeleri KULLANMA. Daima "değerlendirilebilir", "gündeme gelebilir", "iddia edilmesi halinde" gibi ihtiyatlı dil kullan.
+3. TEKRAR YASAĞI: Hiçbir cümleyi, maddeyi veya adımı iki kez yazma.
+4. Sana verilen maddeler dışında madde ekleme.
+5. Her zaman yalnızca şu beş başlığı kullan:
+
+OLAYIN HUKUKİ NİTELİĞİ
+OLASI SUÇ VE İHLALLER
+HUKUKİ DEĞERLENDİRME
+PRATİK OLARAK YAPILABİLECEKLER
+RESMİ BAŞVURU YOLLARI"
+
+
 except Exception as e:
     st.error(f"Gemini API Hatası: {e}")
     st.stop()
