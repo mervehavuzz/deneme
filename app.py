@@ -151,7 +151,7 @@ def call_llm(prompt, gecmis=None):
                 prompt,
                 generation_config=genai.GenerationConfig(
                     temperature=0.2,
-                    max_output_tokens=1500,
+                    max_output_tokens=8192,
                 )
             )
             uyari_alani.empty()
